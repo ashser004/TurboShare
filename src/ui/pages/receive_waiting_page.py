@@ -62,11 +62,11 @@ class ReceiveWaitingPage(QWidget):
         card.setMaximumWidth(480)
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(28, 24, 28, 24)
-        card_layout.setSpacing(12)
+        card_layout.setSpacing(8)
         card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # QR Code
-        self._qr_widget = QRWidget(size=220)
+        self._qr_widget = QRWidget(size=180)
         card_layout.addWidget(self._qr_widget, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # URL
@@ -111,7 +111,7 @@ class ReceiveWaitingPage(QWidget):
         card_layout.addWidget(self._status_label)
 
         # Lottie
-        self._lottie = LottieWidget("waiting", width=100, height=100)
+        self._lottie = LottieWidget("waiting", width=80, height=80)
         card_layout.addWidget(self._lottie, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Device info (hidden)

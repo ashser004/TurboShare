@@ -27,14 +27,14 @@ class PinDisplay(QWidget):
         for _ in range(6):
             digit = QLabel("–")
             digit.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            digit.setFixedSize(56, 72)
+            digit.setFixedSize(44, 56)
             digit.setStyleSheet(f"""
                 QLabel {{
                     background-color: {Colors.BG_TERTIARY};
                     color: {Colors.ACCENT_PRIMARY};
                     border: 2px solid {Colors.BORDER_LIGHT};
                     border-radius: 12px;
-                    font-size: 32px;
+                    font-size: 24px;
                     font-weight: bold;
                     font-family: "Consolas", "Courier New", monospace;
                 }}

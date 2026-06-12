@@ -103,11 +103,11 @@ class SendPreviewPage(QWidget):
         """)
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(20, 20, 20, 20)
-        right_layout.setSpacing(12)
+        right_layout.setSpacing(8)
         right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # QR Code
-        self._qr_widget = QRWidget(size=240)
+        self._qr_widget = QRWidget(size=180)
         right_layout.addWidget(self._qr_widget, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # URL text
@@ -157,7 +157,7 @@ class SendPreviewPage(QWidget):
         right_layout.addWidget(self._status_label)
 
         # Lottie animation
-        self._lottie = LottieWidget("waiting", width=120, height=120)
+        self._lottie = LottieWidget("waiting", width=80, height=80)
         right_layout.addWidget(self._lottie, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Device info (hidden initially)
@@ -277,9 +277,14 @@ class SendPreviewPage(QWidget):
             return
 
         from pathlib import Path
+        existing_paths = {str(Path(f["path"]).resolve()) for f in self._files_data}
+
         next_id = max((f["id"] for f in self._files_data), default=-1) + 1
         for p in paths:
             p = Path(p)
+            abs_path = str(p.resolve())
+            if abs_path in existing_paths:
+                continue
             entry = {
                 "id": next_id,
                 "name": p.name,
@@ -289,6 +294,7 @@ class SendPreviewPage(QWidget):
             self._files_data.append(entry)
             self._file_list.add_file(entry["id"], entry["name"], entry["size"])
             next_id += 1
+            existing_paths.add(abs_path)
 
         self._update_summary()
         self.files_changed.emit(self._files_data)

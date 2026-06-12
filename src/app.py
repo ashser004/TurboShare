@@ -47,8 +47,8 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(APP_NAME)
-        self.setMinimumSize(900, 650)
-        self.resize(1000, 700)
+        self.setMinimumSize(900, 600)
+        self.resize(1000, 650)
         self.setStyleSheet(f"background-color: {Colors.BG_PRIMARY};")
 
         # ── Core objects ────────────────────────────────────────────

@@ -35,7 +35,7 @@ class DonePage(QWidget):
         layout.addStretch(1)
 
         # Lottie success animation
-        self._lottie = LottieWidget("success", width=180, height=180, loop=False)
+        self._lottie = LottieWidget("success", width=120, height=120, loop=False)
         layout.addWidget(self._lottie, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Title

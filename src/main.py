@@ -18,7 +18,6 @@ logging.basicConfig(
 log = logging.getLogger("turboshare")
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt
 from qasync import QEventLoop
 
 from src.ui.theme import load_fonts, get_stylesheet
@@ -31,9 +30,6 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setApplicationName("TurboShare")
     app.setOrganizationName("TurboShare")
-
-    # High DPI support
-    app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)
 
     # Load custom fonts and apply global stylesheet
     load_fonts()

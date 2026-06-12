@@ -25,20 +25,19 @@ class FileListItem(QFrame):
                  removable: bool = True, parent=None):
         super().__init__(parent)
         self.file_id = file_id
-        self.setProperty("class", "card")
+        self.setObjectName("file_item_card")
         self.setStyleSheet(f"""
-            QFrame {{
+            QFrame#file_item_card {{
                 background-color: {Colors.BG_TERTIARY};
                 border: 1px solid {Colors.BORDER};
                 border-radius: 10px;
-                padding: 8px 12px;
-                margin: 2px 0;
+                color: {Colors.TEXT_PRIMARY};
             }}
         """)
         self.setFixedHeight(52)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(8, 4, 8, 4)
+        layout.setContentsMargins(12, 6, 12, 6)
         layout.setSpacing(10)
 
         # Icon
@@ -104,13 +103,10 @@ class FileListItem(QFrame):
         elif status == "waiting":
             self._status_label.setText("⏳")
             self.setStyleSheet(f"""
-                QFrame {{
-                    background-color: {Colors.BG_SECONDARY};
-                    border: 1px solid {Colors.BORDER};
+                QFrame#file_item_card {{
+                    background-color: rgba(22, 22, 26, 0.5);
+                    border: 1px solid rgba(42, 42, 53, 0.5);
                     border-radius: 10px;
-                    padding: 8px 12px;
-                    margin: 2px 0;
-                    opacity: 0.5;
                 }}
             """)
         else:
@@ -122,7 +118,7 @@ class FileListWidget(QWidget):
 
     file_removed = Signal(int)  # file_id
 
-    def __init__(self, removable: bool = True, parent=None):
+    def __init__(self, removable: bool = True, show_footer: bool = True, parent=None):
         super().__init__(parent)
         self._removable = removable
         self._items: dict[int, FileListItem] = {}
@@ -157,6 +153,8 @@ class FileListWidget(QWidget):
         )
         self._footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
         outer_layout.addWidget(self._footer)
+        if not show_footer:
+            self._footer.hide()
 
     def add_file(self, file_id: int, name: str, size: int) -> None:
         item = FileListItem(file_id, name, size, self._removable)

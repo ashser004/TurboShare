@@ -51,9 +51,10 @@ class DonePage(QWidget):
 
         # Stats card
         stats_card = QFrame()
+        stats_card.setObjectName("stats_card_frame")
         stats_card.setMaximumWidth(400)
         stats_card.setStyleSheet(f"""
-            QFrame {{
+            QFrame#stats_card_frame {{
                 background-color: {Colors.BG_SECONDARY};
                 border: 1px solid {Colors.BORDER};
                 border-radius: 16px;

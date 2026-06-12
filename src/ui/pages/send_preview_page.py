@@ -38,12 +38,12 @@ class SendPreviewPage(QWidget):
 
         # ── LEFT PANEL: File list ───────────────────────────────────
         left_panel = QFrame()
+        left_panel.setObjectName("left_panel_frame")
         left_panel.setStyleSheet(f"""
-            QFrame {{
+            QFrame#left_panel_frame {{
                 background-color: {Colors.BG_SECONDARY};
                 border: 1px solid {Colors.BORDER};
                 border-radius: 16px;
-                padding: 16px;
             }}
         """)
         left_layout = QVBoxLayout(left_panel)
@@ -57,7 +57,7 @@ class SendPreviewPage(QWidget):
         """)
         left_layout.addWidget(files_title)
 
-        self._file_list = FileListWidget(removable=True)
+        self._file_list = FileListWidget(removable=True, show_footer=False)
         self._file_list.file_removed.connect(self._on_file_removed)
         left_layout.addWidget(self._file_list, 1)
 
@@ -93,12 +93,12 @@ class SendPreviewPage(QWidget):
 
         # ── RIGHT PANEL: QR + PIN + Status ──────────────────────────
         right_panel = QFrame()
+        right_panel.setObjectName("right_panel_frame")
         right_panel.setStyleSheet(f"""
-            QFrame {{
+            QFrame#right_panel_frame {{
                 background-color: {Colors.BG_SECONDARY};
                 border: 1px solid {Colors.BORDER};
                 border-radius: 16px;
-                padding: 16px;
             }}
         """)
         right_layout = QVBoxLayout(right_panel)
@@ -268,8 +268,10 @@ class SendPreviewPage(QWidget):
         self.files_changed.emit(self._files_data)
 
     def _add_more_files(self) -> None:
+        from PySide6.QtCore import QStandardPaths
+        default_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DownloadLocation)
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Add Files", "", "All Files (*)"
+            self, "Add Files", default_dir, "All Files (*)"
         )
         if not paths:
             return

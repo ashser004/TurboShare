@@ -143,8 +143,10 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _on_send_clicked(self) -> None:
+        from PySide6.QtCore import QStandardPaths
+        default_dir = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DownloadLocation)
         paths, _ = QFileDialog.getOpenFileNames(
-            self, "Select Files to Send", "", "All Files (*)"
+            self, "Select Files to Send", default_dir, "All Files (*)"
         )
         if not paths:
             return

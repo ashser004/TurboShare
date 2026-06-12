@@ -69,12 +69,12 @@ class TransferPage(QWidget):
 
         # ── Overall progress ────────────────────────────────────────
         overall_card = QFrame()
+        overall_card.setObjectName("overall_card_frame")
         overall_card.setStyleSheet(f"""
-            QFrame {{
+            QFrame#overall_card_frame {{
                 background-color: {Colors.BG_SECONDARY};
                 border: 1px solid {Colors.BORDER};
                 border-radius: 12px;
-                padding: 12px;
             }}
         """)
         overall_layout = QVBoxLayout(overall_card)

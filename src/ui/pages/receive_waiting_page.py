@@ -51,8 +51,9 @@ class ReceiveWaitingPage(QWidget):
 
         # Card container
         card = QFrame()
+        card.setObjectName("receive_card_frame")
         card.setStyleSheet(f"""
-            QFrame {{
+            QFrame#receive_card_frame {{
                 background-color: {Colors.BG_SECONDARY};
                 border: 1px solid {Colors.BORDER};
                 border-radius: 16px;

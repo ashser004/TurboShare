@@ -24,7 +24,7 @@ class DonePage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"background-color: {Colors.BG_PRIMARY};")
+
         self._is_receive = False
 
         layout = QVBoxLayout(self)

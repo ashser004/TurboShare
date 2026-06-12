@@ -29,7 +29,6 @@ class SendPreviewPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"background-color: {Colors.BG_PRIMARY};")
         self._files_data: list[dict] = []
 
         main_layout = QHBoxLayout(self)
@@ -104,7 +103,7 @@ class SendPreviewPage(QWidget):
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(20, 20, 20, 20)
         right_layout.setSpacing(8)
-        right_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        right_layout.addStretch(1)
 
         # QR Code
         self._qr_widget = QRWidget(size=180)
@@ -123,14 +122,14 @@ class SendPreviewPage(QWidget):
         right_layout.addWidget(self._url_label)
 
         # HTTPS warning hint
-        https_hint = QLabel("📱 On phone: tap Advanced → Proceed if warned about certificate")
-        https_hint.setWordWrap(True)
-        https_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        https_hint.setStyleSheet(f"""
+        self._https_hint = QLabel("📱 On phone: tap Advanced → Proceed if warned about certificate")
+        self._https_hint.setWordWrap(True)
+        self._https_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._https_hint.setStyleSheet(f"""
             font-size: 10px; color: {Colors.ACCENT_WARNING};
             background: transparent; padding: 2px;
         """)
-        right_layout.addWidget(https_hint)
+        right_layout.addWidget(self._https_hint)
 
         # PIN display
         pin_title = QLabel("PIN")
@@ -139,7 +138,7 @@ class SendPreviewPage(QWidget):
             font-size: 12px; color: {Colors.TEXT_SECONDARY};
             font-weight: bold; background: transparent; letter-spacing: 3px;
         """)
-        right_layout.addWidget(pin_title)
+        right_layout.addWidget(pin_title, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self._pin_display = PinDisplay()
         right_layout.addWidget(self._pin_display, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -154,11 +153,12 @@ class SendPreviewPage(QWidget):
             font-size: 14px; color: {Colors.TEXT_SECONDARY};
             background: transparent;
         """)
-        right_layout.addWidget(self._status_label)
+        right_layout.addWidget(self._status_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Lottie animation
         self._lottie = LottieWidget("waiting", width=80, height=80)
         right_layout.addWidget(self._lottie, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._lottie.hide()
 
         # Device info (hidden initially)
         self._device_info_label = QLabel("")
@@ -169,7 +169,7 @@ class SendPreviewPage(QWidget):
             background: transparent; padding: 8px;
         """)
         self._device_info_label.hide()
-        right_layout.addWidget(self._device_info_label)
+        right_layout.addWidget(self._device_info_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Confirm / Reject buttons
         btn_layout = QHBoxLayout()
@@ -186,10 +186,31 @@ class SendPreviewPage(QWidget):
         self._confirm_btn.setProperty("class", "primary")
         self._confirm_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._confirm_btn.setEnabled(False)
+        self._confirm_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {Colors.ACCENT_PRIMARY};
+                color: {Colors.BG_PRIMARY};
+                border: none;
+                border-radius: 12px;
+                padding: 14px 28px;
+                font-size: 15px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: #00E8BB;
+            }}
+            QPushButton:disabled {{
+                background-color: rgba(0, 212, 170, 0.08);
+                color: rgba(0, 212, 170, 0.35);
+                border: 1px solid rgba(0, 212, 170, 0.18);
+            }}
+        """)
         self._confirm_btn.clicked.connect(self.confirm_clicked.emit)
+        self._confirm_btn.hide()
         btn_layout.addWidget(self._confirm_btn)
 
         right_layout.addLayout(btn_layout)
+        right_layout.addStretch(1)
 
         # Cancel button
         cancel_btn = QPushButton("Cancel")
@@ -225,9 +246,14 @@ class SendPreviewPage(QWidget):
         self._status_label.setText("Waiting for receiver to scan…")
         self._device_info_label.hide()
         self._confirm_btn.setEnabled(False)
-        self._update_button_style(self._confirm_btn)
+        self._confirm_btn.hide()
         self._reject_btn.hide()
-        self._lottie.load_animation("waiting")
+        self._lottie.hide()
+        
+        # Show QR code elements
+        self._qr_widget.show()
+        self._url_label.show()
+        self._https_hint.show()
 
     def show_receiver_info(self, browser: str, os_name: str, ip: str) -> None:
         """Called when Stage 1 completes — show device info and enable Confirm."""
@@ -243,9 +269,15 @@ class SendPreviewPage(QWidget):
         )
         self._device_info_label.show()
         self._confirm_btn.setEnabled(True)
-        self._update_button_style(self._confirm_btn)
+        self._confirm_btn.show()
         self._reject_btn.show()
         self._lottie.load_animation("connecting")
+        self._lottie.show()
+        
+        # Hide QR code elements to prevent layout overlapping
+        self._qr_widget.hide()
+        self._url_label.hide()
+        self._https_hint.hide()
 
     def refresh_session(self, url: str, pin: str) -> None:
         """Refresh QR + PIN after session regeneration."""
@@ -259,8 +291,15 @@ class SendPreviewPage(QWidget):
         """)
         self._device_info_label.hide()
         self._confirm_btn.setEnabled(False)
+        self._update_button_style(self._confirm_btn)
+        self._confirm_btn.hide()
         self._reject_btn.hide()
-        self._lottie.load_animation("waiting")
+        self._lottie.hide()
+        
+        # Show QR code elements
+        self._qr_widget.show()
+        self._url_label.show()
+        self._https_hint.show()
 
     # ── Private ─────────────────────────────────────────────────────
 

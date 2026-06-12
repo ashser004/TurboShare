@@ -30,7 +30,6 @@ class ReceiveWaitingPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"background-color: {Colors.BG_PRIMARY};")
         self._save_dir = DEFAULT_SAVE_DIR
 
         layout = QVBoxLayout(self)
@@ -61,9 +60,9 @@ class ReceiveWaitingPage(QWidget):
         """)
         card.setMaximumWidth(480)
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(28, 24, 28, 24)
+        card_layout.setContentsMargins(28, 20, 28, 20)
         card_layout.setSpacing(8)
-        card_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        card_layout.addStretch(1)
 
         # QR Code
         self._qr_widget = QRWidget(size=180)
@@ -81,11 +80,11 @@ class ReceiveWaitingPage(QWidget):
         card_layout.addWidget(self._url_label)
 
         # HTTPS hint
-        https_hint = QLabel("📱 On phone: tap Advanced → Proceed if warned about certificate")
-        https_hint.setWordWrap(True)
-        https_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        https_hint.setStyleSheet(f"font-size: 10px; color: {Colors.ACCENT_WARNING}; background: transparent;")
-        card_layout.addWidget(https_hint)
+        self._https_hint = QLabel("📱 On phone: tap Advanced → Proceed if warned about certificate")
+        self._https_hint.setWordWrap(True)
+        self._https_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._https_hint.setStyleSheet(f"font-size: 10px; color: {Colors.ACCENT_WARNING}; background: transparent;")
+        card_layout.addWidget(self._https_hint)
 
         # PIN
         pin_title = QLabel("PIN")
@@ -94,7 +93,7 @@ class ReceiveWaitingPage(QWidget):
             font-size: 12px; color: {Colors.TEXT_SECONDARY};
             font-weight: bold; background: transparent; letter-spacing: 3px;
         """)
-        card_layout.addWidget(pin_title)
+        card_layout.addWidget(pin_title, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self._pin_display = PinDisplay()
         card_layout.addWidget(self._pin_display, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -108,11 +107,12 @@ class ReceiveWaitingPage(QWidget):
             font-size: 14px; color: {Colors.TEXT_SECONDARY};
             background: transparent;
         """)
-        card_layout.addWidget(self._status_label)
+        card_layout.addWidget(self._status_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Lottie
         self._lottie = LottieWidget("waiting", width=80, height=80)
         card_layout.addWidget(self._lottie, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._lottie.hide()
 
         # Device info (hidden)
         self._device_info_label = QLabel("")
@@ -123,7 +123,7 @@ class ReceiveWaitingPage(QWidget):
             background: transparent; padding: 8px;
         """)
         self._device_info_label.hide()
-        card_layout.addWidget(self._device_info_label)
+        card_layout.addWidget(self._device_info_label, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         # Confirm / Reject
         btn_layout = QHBoxLayout()
@@ -140,10 +140,31 @@ class ReceiveWaitingPage(QWidget):
         self._confirm_btn.setProperty("class", "primary")
         self._confirm_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._confirm_btn.setEnabled(False)
+        self._confirm_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {Colors.ACCENT_PRIMARY};
+                color: {Colors.BG_PRIMARY};
+                border: none;
+                border-radius: 12px;
+                padding: 14px 28px;
+                font-size: 15px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: #00E8BB;
+            }}
+            QPushButton:disabled {{
+                background-color: rgba(0, 212, 170, 0.08);
+                color: rgba(0, 212, 170, 0.35);
+                border: 1px solid rgba(0, 212, 170, 0.18);
+            }}
+        """)
         self._confirm_btn.clicked.connect(self.confirm_clicked.emit)
+        self._confirm_btn.hide()
         btn_layout.addWidget(self._confirm_btn)
 
         card_layout.addLayout(btn_layout)
+        card_layout.addStretch(1)
 
         layout.addWidget(card, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -200,9 +221,14 @@ class ReceiveWaitingPage(QWidget):
         self._status_label.setText("Waiting for sender to connect…")
         self._device_info_label.hide()
         self._confirm_btn.setEnabled(False)
-        self._update_button_style(self._confirm_btn)
+        self._confirm_btn.hide()
         self._reject_btn.hide()
-        self._lottie.load_animation("waiting")
+        self._lottie.hide()
+        
+        # Show QR code elements
+        self._qr_widget.show()
+        self._url_label.show()
+        self._https_hint.show()
 
     def show_sender_info(self, browser: str, os_name: str, ip: str) -> None:
         self._status_label.setText("Sender found — verify the device below")
@@ -215,9 +241,15 @@ class ReceiveWaitingPage(QWidget):
         )
         self._device_info_label.show()
         self._confirm_btn.setEnabled(True)
-        self._update_button_style(self._confirm_btn)
+        self._confirm_btn.show()
         self._reject_btn.show()
         self._lottie.load_animation("connecting")
+        self._lottie.show()
+        
+        # Hide QR code elements to prevent layout overlapping
+        self._qr_widget.hide()
+        self._url_label.hide()
+        self._https_hint.hide()
 
     def refresh_session(self, url: str, pin: str) -> None:
         self.setup(url, pin)

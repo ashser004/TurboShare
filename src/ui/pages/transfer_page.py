@@ -27,7 +27,7 @@ class TransferPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"background-color: {Colors.BG_PRIMARY};")
+
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(32, 24, 32, 24)

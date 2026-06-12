@@ -200,6 +200,7 @@ class ReceiveWaitingPage(QWidget):
         self._status_label.setText("Waiting for sender to connect…")
         self._device_info_label.hide()
         self._confirm_btn.setEnabled(False)
+        self._update_button_style(self._confirm_btn)
         self._reject_btn.hide()
         self._lottie.load_animation("waiting")
 
@@ -214,6 +215,7 @@ class ReceiveWaitingPage(QWidget):
         )
         self._device_info_label.show()
         self._confirm_btn.setEnabled(True)
+        self._update_button_style(self._confirm_btn)
         self._reject_btn.show()
         self._lottie.load_animation("connecting")
 
@@ -232,3 +234,7 @@ class ReceiveWaitingPage(QWidget):
             self._save_dir = Path(folder)
             self._save_path_label.setText(folder)
             self.save_dir_changed.emit(folder)
+
+    def _update_button_style(self, button: QPushButton) -> None:
+        button.style().unpolish(button)
+        button.style().polish(button)

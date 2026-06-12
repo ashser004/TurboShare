@@ -151,8 +151,9 @@ def get_stylesheet() -> str:
     }}
 
     QPushButton[class="primary"]:disabled {{
-        background-color: #1A3A32;
-        color: {Colors.TEXT_MUTED};
+        background-color: rgba(0, 212, 170, 0.06);
+        color: #55706B;
+        border: 1px solid rgba(0, 212, 170, 0.15);
     }}
 
     QPushButton[class="danger"] {{

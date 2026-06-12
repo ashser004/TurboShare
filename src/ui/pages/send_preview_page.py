@@ -225,6 +225,7 @@ class SendPreviewPage(QWidget):
         self._status_label.setText("Waiting for receiver to scan…")
         self._device_info_label.hide()
         self._confirm_btn.setEnabled(False)
+        self._update_button_style(self._confirm_btn)
         self._reject_btn.hide()
         self._lottie.load_animation("waiting")
 
@@ -242,6 +243,7 @@ class SendPreviewPage(QWidget):
         )
         self._device_info_label.show()
         self._confirm_btn.setEnabled(True)
+        self._update_button_style(self._confirm_btn)
         self._reject_btn.show()
         self._lottie.load_animation("connecting")
 
@@ -311,3 +313,7 @@ class SendPreviewPage(QWidget):
         self._file_list.set_footer(
             f"{count} file{'s' if count != 1 else ''} • {format_size(total)}"
         )
+
+    def _update_button_style(self, button: QPushButton) -> None:
+        button.style().unpolish(button)
+        button.style().polish(button)

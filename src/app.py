@@ -268,10 +268,12 @@ class MainWindow(QMainWindow):
 
     @Slot(dict)
     def _on_transfer_completed(self, stats: dict) -> None:
+        from src.core.session import SessionState
+        self.session.set_state(SessionState.COMPLETED)
         is_receive = self.session.mode == SessionMode.RECEIVE
         self._done.show_stats(stats, is_receive=is_receive)
         self._navigate_to(PAGE_DONE)
-        asyncio.ensure_future(self._stop_server())
+        asyncio.ensure_future(self._stop_server_delayed())
 
     @Slot(str)
     def _on_error(self, message: str) -> None:
@@ -318,6 +320,10 @@ class MainWindow(QMainWindow):
     async def _stop_server(self) -> None:
         if self.server.is_running:
             await self.server.stop()
+
+    async def _stop_server_delayed(self) -> None:
+        await asyncio.sleep(1.0)
+        await self._stop_server()
 
     def closeEvent(self, event) -> None:
         """Clean shutdown on window close."""

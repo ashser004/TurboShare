@@ -15,6 +15,7 @@
 
     let sessionMode = 'send';  // 'send' = laptop sends, phone receives
     let selectedFiles = null;
+    let sessionFiles = [];
 
     // ── Initialise ─────────────────────────────────────────────────
 
@@ -78,6 +79,7 @@
             indicator.textContent = 'Files ready for you to download';
             document.getElementById('file-list-card').style.display = 'block';
             document.getElementById('upload-area').style.display = 'none';
+            sessionFiles = data.files || [];
 
             renderFileList(data.files, data.total_size);
         } else {
@@ -213,6 +215,11 @@
                     if (sessionMode === 'receive' && selectedFiles) {
                         // Phone is sender — upload files
                         window.Download.uploadFiles(TOKEN, selectedFiles);
+                    } else if (sessionMode === 'send') {
+                        // Phone is receiver — start download queue
+                        if (window.Download && sessionFiles.length > 0) {
+                            window.Download.startQueue(sessionFiles);
+                        }
                     }
 
                     // Start progress listener

@@ -84,7 +84,11 @@ async def download_file(request: web.Request) -> web.StreamResponse:
 
     # Stream all chunks sequentially
     for i in range(chunker.total_chunks):
-        data, _ = chunker.get_chunk(i)
+        result = engine.get_chunk(file_id, i)
+        if result is None:
+            # Transfer was cancelled
+            break
+        data, _ = result
         await response.write(data)
 
     await response.write_eof()

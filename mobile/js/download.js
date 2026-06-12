@@ -12,29 +12,55 @@
 
     const downloadedFiles = new Set();
     let sessionToken = '';
+    let downloadQueue = [];
+    let activeDownloadId = null;
 
     window.Download = {
         setToken: function (token) { sessionToken = token; },
-        checkCompleted: checkCompleted,
+        startQueue: startQueue,
+        onProgressUpdate: onProgressUpdate,
         uploadFiles: uploadFiles,
+        triggerDownload: triggerDownload,
     };
 
     /**
-     * Check which files have completed and trigger downloads for new ones.
+     * Start the sequential download queue.
      */
-    function checkCompleted(files) {
-        files.forEach(f => {
-            if (f.status === 'done' && !downloadedFiles.has(f.id)) {
-                downloadedFiles.add(f.id);
-                triggerDownload(f.id, f.name);
-            }
-        });
+    function startQueue(files) {
+        downloadQueue = [...files];
+        activeDownloadId = null;
+        downloadNext();
     }
 
     /**
-     * Trigger a native browser download for a completed file.
+     * Download the next file in the queue.
+     */
+    function downloadNext() {
+        if (downloadQueue.length === 0) return;
+        const nextFile = downloadQueue.shift();
+        activeDownloadId = nextFile.id;
+        triggerDownload(nextFile.id, nextFile.name);
+    }
+
+    /**
+     * Listen to server progress updates and trigger next file when current completes.
+     */
+    function onProgressUpdate(files) {
+        if (activeDownloadId === null) return;
+        const activeFile = files.find(f => f.id === activeDownloadId);
+        if (activeFile && activeFile.status === 'done') {
+            activeDownloadId = null;
+            downloadNext();
+        }
+    }
+
+    /**
+     * Trigger a native browser download for a file.
      */
     function triggerDownload(fileId, filename) {
+        if (downloadedFiles.has(fileId)) return;
+        downloadedFiles.add(fileId);
+
         const a = document.createElement('a');
         a.href = `/ts/${sessionToken}/api/download/${fileId}`;
         a.download = filename;
@@ -149,6 +175,10 @@
 
             if (!success) {
                 console.error(`Failed to upload chunk ${chunkIndex} after 3 retries`);
+                if (window.App) {
+                    window.App.showError(`Connection lost. Failed to upload chunk ${chunkIndex}.`);
+                }
+                return;
             }
         }
     }
@@ -165,8 +195,17 @@
     // ── Minimal MD5 implementation ────────────────────────────────
     // Based on Joseph Myers' implementation, minified for bundle size.
     function md5(uint8Array) {
-        const str = Array.from(uint8Array).map(b => String.fromCharCode(b)).join('');
+        const str = uint8ArrayToBinaryString(uint8Array);
         return md5str(str);
+    }
+
+    function uint8ArrayToBinaryString(uint8Array) {
+        let str = "";
+        const CHUNK_SZ = 65536;
+        for (let i = 0; i < uint8Array.length; i += CHUNK_SZ) {
+            str += String.fromCharCode.apply(null, uint8Array.subarray(i, i + CHUNK_SZ));
+        }
+        return str;
     }
 
     function md5str(string) {

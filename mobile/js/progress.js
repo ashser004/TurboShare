@@ -127,7 +127,7 @@
 
         // Trigger file downloads for completed files (send mode)
         if (window.Download && data.files) {
-            window.Download.checkCompleted(data.files);
+            window.Download.onProgressUpdate(data.files);
         }
     }
 

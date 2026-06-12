@@ -51,6 +51,7 @@ class TransferEngine:
         self._current_file_id: int = -1
         self._cancelled: bool = False
         self._cumulative_bytes: int = 0
+        self._bytes_sent_per_file: dict[int, int] = {}
 
     # ── Setup ───────────────────────────────────────────────────────
 
@@ -70,6 +71,7 @@ class TransferEngine:
         self._files = files
         self._cancelled = False
         self._cumulative_bytes = 0
+        self._bytes_sent_per_file = {f.id: 0 for f in files}
 
         for f in files:
             self._chunkers[f.id] = FileChunker(f.path)
@@ -87,6 +89,7 @@ class TransferEngine:
         self._files = files
         self._cancelled = False
         self._cumulative_bytes = 0
+        self._bytes_sent_per_file = {}
 
         for f in files:
             self._assemblers[f.id] = FileAssembler(
@@ -112,6 +115,7 @@ class TransferEngine:
             data, md5 = chunker.get_chunk(chunk_index)
             self.speed.record(len(data))
             self._cumulative_bytes += len(data)
+            self._bytes_sent_per_file[file_id] = self._bytes_sent_per_file.get(file_id, 0) + len(data)
             self._update_progress(file_id)
             return data, md5
         except IndexError:
@@ -170,8 +174,10 @@ class TransferEngine:
             asm = self._assemblers[active_file_id]
             file_progress = asm.progress
         elif active_file_id in self._chunkers:
-            # For sender mode, track via cumulative bytes for this file
-            file_progress = min(1.0, self._cumulative_bytes / total_size)
+            # For sender mode, track via bytes sent for this specific file
+            bytes_sent = self._bytes_sent_per_file.get(active_file_id, 0)
+            file_size = active_file.size if active_file else 1
+            file_progress = min(1.0, bytes_sent / max(1, file_size))
         else:
             file_progress = 0.0
 

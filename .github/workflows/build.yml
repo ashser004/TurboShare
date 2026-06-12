@@ -41,6 +41,10 @@ jobs:
         run: |
           python -m PyInstaller --onedir --windowed --clean --noconfirm --name "TurboShare" --icon "build\installer\TurboShare.ico" --add-data "assets;assets" --add-data "mobile;mobile" src/main.py
 
+      - name: Clean unused heavy Qt components
+        run: |
+          python scripts/cleanup_build.py
+
       - name: Install Inno Setup
         shell: cmd
         run: choco install innosetup -y --no-progress

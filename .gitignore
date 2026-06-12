@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.spec
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# TurboShare temp files
+*.turbotemp
+
+# SSL temp certs (auto-generated at runtime)
+turboshare_ssl_*/
+
+# PyInstaller
+*.manifest
+
+# Temp cleanup folder
+temp/
+
+# Env files
+.env
+.env.local

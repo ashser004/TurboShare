@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0D0D0F">
+    <title>TurboShare</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SECTION 1 — Landing / PIN Entry (Receive files from laptop)
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="sec-landing" class="section active">
+        <!-- Logo -->
+        <div class="logo-fallback">⚡</div>
+        <div class="app-title">TurboShare</div>
+        <div class="app-subtitle">SECURE · LOCAL · FAST</div>
+
+        <!-- Mode indicator -->
+        <div id="mode-indicator" class="status-text"></div>
+
+        <!-- File list (shown in Send mode — laptop sends to phone) -->
+        <div id="file-list-card" class="card" style="display:none;">
+            <div style="font-size:14px; font-weight:600; margin-bottom:8px; color:var(--text-secondary);">
+                Files you'll receive:
+            </div>
+            <div id="file-list" class="file-list"></div>
+            <div class="total-info">
+                <span id="file-count">0 files</span>
+                <span id="total-size" class="total-size">0 B</span>
+            </div>
+        </div>
+
+        <!-- Upload area (shown in Receive mode — phone sends to laptop) -->
+        <div id="upload-area" class="upload-area" style="display:none;">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Tap to select files to send</div>
+            <input type="file" id="file-input" multiple>
+        </div>
+        <div id="selected-files-card" class="card" style="display:none;">
+            <div style="font-size:14px; font-weight:600; margin-bottom:8px; color:var(--text-secondary);">
+                Files to send:
+            </div>
+            <div id="selected-files-list" class="file-list"></div>
+            <div class="total-info">
+                <span id="selected-count">0 files</span>
+                <span id="selected-size" class="total-size">0 B</span>
+            </div>
+        </div>
+
+        <!-- PIN Entry -->
+        <div class="pin-label">ENTER PIN</div>
+        <div class="pin-container" id="pin-container"></div>
+
+        <!-- Error message -->
+        <div id="pin-error" class="error-message" style="display:none;"></div>
+
+        <!-- Confirm button -->
+        <button id="btn-confirm" class="btn btn-primary" disabled>Confirm</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SECTION 2 — Waiting for sender to confirm
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="sec-waiting" class="section">
+        <div class="logo-fallback">⚡</div>
+        <div class="app-title">TurboShare</div>
+        <div class="status-text">Waiting for sender to confirm…</div>
+        <div id="lottie-waiting" class="lottie-container"></div>
+        <div class="status-text" style="font-size:12px; color:var(--text-muted);">
+            The sender is verifying your device
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SECTION 3 — Transfer Progress
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="sec-transfer" class="section">
+        <div class="app-title" style="font-size:18px; margin-bottom:16px;">Transferring…</div>
+
+        <div class="progress-section">
+            <div id="transfer-current-file" class="progress-current-file">Preparing…</div>
+
+            <div class="progress-bar-track">
+                <div id="transfer-file-bar" class="progress-bar-fill" style="width:0%"></div>
+            </div>
+            <div id="transfer-file-pct" class="progress-pct">0%</div>
+
+            <div id="transfer-speed" class="speed-value">0 MB/s</div>
+
+            <div class="progress-stats">
+                <span id="transfer-eta">estimating…</span>
+                <span id="transfer-bytes">0 / 0</span>
+            </div>
+        </div>
+
+        <div id="lottie-transfer" class="lottie-container lottie-sm"></div>
+
+        <!-- Overall -->
+        <div class="overall-card">
+            <div class="overall-header">
+                <span class="overall-title">Overall Progress</span>
+                <span id="transfer-files-count" class="overall-count">0 of 0</span>
+            </div>
+            <div class="progress-bar-track">
+                <div id="transfer-overall-bar" class="progress-bar-fill" style="width:0%"></div>
+            </div>
+        </div>
+
+        <!-- File status list -->
+        <div class="card" style="max-height:200px; overflow-y:auto; padding:12px;">
+            <div id="transfer-file-list" class="file-list"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SECTION 4 — Success
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="sec-success" class="section">
+        <div id="lottie-success" class="lottie-container"></div>
+        <div class="success-title">All files transferred! 🎉</div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-label">📁 Files</div>
+                <div id="stat-files" class="stat-value">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">💾 Size</div>
+                <div id="stat-size" class="stat-value">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">⚡ Speed</div>
+                <div id="stat-speed" class="stat-value">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">⏱️ Time</div>
+                <div id="stat-time" class="stat-value">0</div>
+            </div>
+        </div>
+
+        <div id="download-hint" class="download-hint"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SECTION 5 — Error
+         ═══════════════════════════════════════════════════════════════ -->
+    <div id="sec-error" class="section">
+        <div id="lottie-error" class="lottie-container"></div>
+        <div class="app-title" style="color:var(--accent-danger);">Something went wrong</div>
+        <div id="error-detail" class="status-text error"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Scripts (loaded from bundled local files)
+         ═══════════════════════════════════════════════════════════════ -->
+    <script src="static/js/lottie-web.min.js"></script>
+    <script src="static/js/pin-input.js"></script>
+    <script src="static/js/progress.js"></script>
+    <script src="static/js/download.js"></script>
+    <script src="static/js/app.js"></script>
+</body>
+</html>

@@ -223,53 +223,16 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_sender_confirm(self) -> None:
         """Stage 2: User clicks Confirm."""
-        import aiohttp
-        asyncio.ensure_future(self._do_sender_confirm())
-
-    async def _do_sender_confirm(self) -> None:
-        """Send the sender-confirm to our own server."""
-        import ssl as ssl_mod
-        import aiohttp
-        ctx = ssl_mod.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl_mod.CERT_NONE
-
-        url = f"{self.session.session_url}api/sender-confirm"
-        try:
-            async with aiohttp.ClientSession() as client:
-                async with client.post(
-                    url,
-                    json={"action": "confirm"},
-                    ssl=ctx,
-                ) as resp:
-                    data = await resp.json()
-                    if data.get("status") == "ok":
-                        log.info("Sender confirmed — transitioning to transfer page")
-        except Exception as exc:
-            log.error("Sender confirm failed: %s", exc)
+        from src.core.session import SessionState
+        if self.session.state == SessionState.RECEIVER_CONFIRMED:
+            self.session.set_state(SessionState.SENDER_CONFIRMED)
+            log.info("Sender confirmed receiver directly in memory")
 
     @Slot()
     def _on_sender_reject(self) -> None:
         """User clicks Reject — regenerate session."""
-        asyncio.ensure_future(self._do_sender_reject())
-
-    async def _do_sender_reject(self) -> None:
-        import ssl as ssl_mod
-        import aiohttp
-        ctx = ssl_mod.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl_mod.CERT_NONE
-
-        url = f"{self.session.session_url}api/sender-confirm"
-        try:
-            async with aiohttp.ClientSession() as client:
-                async with client.post(
-                    url, json={"action": "reject"}, ssl=ctx,
-                ) as resp:
-                    pass
-        except Exception:
-            pass
-        # Session regeneration is handled by the server route
+        log.info("Sender rejected receiver directly in memory — regenerating session")
+        self.session.regenerate()
 
     # ── State changes ───────────────────────────────────────────────
 
@@ -358,7 +321,19 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         """Clean shutdown on window close."""
+        # Prevent default close, hide window, and run async cleanup first
+        event.ignore()
+        self.hide()
+        asyncio.create_task(self._shutdown_and_quit())
+
+    async def _shutdown_and_quit(self) -> None:
+        log.info("Graceful shutdown started...")
         self.engine.cancel()
         self.session.invalidate()
-        asyncio.ensure_future(self._stop_server())
-        super().closeEvent(event)
+        try:
+            await self._stop_server()
+        except Exception as e:
+            log.error("Error stopping server during shutdown: %s", e)
+        log.info("Graceful shutdown complete. Quitting application.")
+        from PySide6.QtWidgets import QApplication
+        QApplication.quit()

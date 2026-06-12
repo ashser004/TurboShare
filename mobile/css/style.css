@@ -469,3 +469,123 @@ input[type="file"] { display: none; }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+/* ── Connection visual in Waiting screen ────────────────────────── */
+.connection-card {
+    position: relative;
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.connection-nodes {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 280px;
+    z-index: 2;
+}
+
+.node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+}
+
+.node-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 8px rgba(0, 212, 170, 0.3));
+}
+
+.phone-node .node-icon {
+    animation: pulseNode 2s infinite ease-in-out;
+}
+
+.laptop-node .node-icon {
+    opacity: 0.7;
+}
+
+.node-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.connection-line-container {
+    flex: 1;
+    position: relative;
+    height: 4px;
+    margin: 0 16px;
+    display: flex;
+    align-items: center;
+}
+
+.pulse-line {
+    width: 100%;
+    height: 2px;
+    background: var(--border-light);
+    border-radius: 1px;
+}
+
+.glowing-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-primary), 0 0 20px var(--accent-primary);
+    animation: flowDot 2s infinite linear;
+}
+
+@keyframes flowDot {
+    0% { left: 0%; opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+}
+
+@keyframes pulseNode {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+/* Radar rings behind the nodes */
+.radar-scan {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 320px;
+    height: 320px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.radar-circle {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px solid rgba(0, 212, 170, 0.15);
+    border-radius: 50%;
+    animation: radarExpand 3s infinite linear;
+}
+
+.radar-circle.delay-1 {
+    animation-delay: 1s;
+}
+
+.radar-circle.delay-2 {
+    animation-delay: 2s;
+}
+
+@keyframes radarExpand {
+    0% { transform: scale(0.2); opacity: 1; }
+    100% { transform: scale(1.1); opacity: 0; }
+}

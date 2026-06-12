@@ -285,7 +285,6 @@
         if (typeof lottie === 'undefined') return;
 
         const animations = {
-            'lottie-waiting': 'waiting',
             'lottie-transfer': 'transferring',
             'lottie-success': 'success',
             'lottie-error': 'error',

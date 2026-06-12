@@ -67,12 +67,35 @@
          SECTION 2 — Waiting for sender to confirm
          ═══════════════════════════════════════════════════════════════ -->
     <div id="sec-waiting" class="section">
-        <div class="logo-fallback">⚡</div>
+        <div class="logo-fallback" style="margin-bottom: 4px;">⚡</div>
         <div class="app-title">TurboShare</div>
-        <div class="status-text">Waiting for sender to confirm…</div>
-        <div id="lottie-waiting" class="lottie-container"></div>
-        <div class="status-text" style="font-size:12px; color:var(--text-muted);">
-            The sender is verifying your device
+        <div class="status-text" style="font-weight: 600; margin-bottom: 24px;">Waiting for sender to confirm…</div>
+
+        <!-- Connection Visual Card -->
+        <div class="card connection-card">
+            <div class="connection-nodes">
+                <div class="node phone-node">
+                    <div class="node-icon">📱</div>
+                    <div class="node-label">This Phone</div>
+                </div>
+                <div class="connection-line-container">
+                    <div class="pulse-line"></div>
+                    <div class="glowing-dot"></div>
+                </div>
+                <div class="node laptop-node">
+                    <div class="node-icon">💻</div>
+                    <div class="node-label">Laptop</div>
+                </div>
+            </div>
+            <div class="radar-scan">
+                <div class="radar-circle"></div>
+                <div class="radar-circle delay-1"></div>
+                <div class="radar-circle delay-2"></div>
+            </div>
+        </div>
+
+        <div class="status-text" style="font-size: 13px; color: var(--text-secondary); margin-top: 20px;">
+            The sender is verifying your device. Please look at the laptop screen and tap <b>Confirm & Send</b>.
         </div>
     </div>
 

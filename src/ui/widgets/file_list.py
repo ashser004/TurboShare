@@ -79,6 +79,9 @@ class FileListItem(QFrame):
                     border: none;
                     font-size: 14px;
                     border-radius: 14px;
+                    padding: 0px;
+                    min-height: 0px;
+                    min-width: 0px;
                 }}
                 QPushButton:hover {{
                     color: {Colors.ACCENT_DANGER};

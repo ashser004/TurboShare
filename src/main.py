@@ -18,8 +18,10 @@ logging.basicConfig(
 log = logging.getLogger("turboshare")
 
 from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 from qasync import QEventLoop
 
+from src.core.config import LOGO_PATH
 from src.ui.theme import load_fonts, get_stylesheet
 from src.app import MainWindow
 
@@ -30,6 +32,8 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setApplicationName("TurboShare")
     app.setOrganizationName("TurboShare")
+    if LOGO_PATH.is_file():
+        app.setWindowIcon(QIcon(str(LOGO_PATH)))
 
     # Load custom fonts and apply global stylesheet
     load_fonts()

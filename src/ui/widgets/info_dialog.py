@@ -18,7 +18,7 @@ class InfoDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Firewall Setup Help")
-        self.setFixedSize(520, 420)
+        self.setFixedSize(520, 500)
         self.setStyleSheet(f"""
             QDialog {{
                 background-color: {Colors.BG_SECONDARY};
@@ -29,7 +29,7 @@ class InfoDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 24)
-        layout.setSpacing(12)
+        layout.setSpacing(8)
 
         title = QLabel("🛡️  Manual Firewall Setup")
         title.setStyleSheet(f"""
@@ -71,8 +71,22 @@ class InfoDialog(QDialog):
         layout.addStretch()
 
         close_btn = QPushButton("Got it")
-        close_btn.setProperty("class", "primary")
         close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {Colors.ACCENT_PRIMARY};
+                color: {Colors.BG_PRIMARY};
+                border: none;
+                border-radius: 12px;
+                padding: 10px 40px;
+                font-size: 14px;
+                font-weight: bold;
+                min-height: 36px;
+            }}
+            QPushButton:hover {{
+                background-color: #00E8BB;
+            }}
+        """)
         close_btn.clicked.connect(self.close)
         layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -81,17 +95,23 @@ class InfoButton(QPushButton):
     """Small ℹ️ icon button that opens the InfoDialog."""
 
     def __init__(self, parent=None):
-        super().__init__("ℹ️", parent)
+        super().__init__("i", parent)
         self.setFixedSize(36, 36)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip("Firewall setup help")
         self.setStyleSheet(f"""
             QPushButton {{
                 background: transparent;
-                border: 1px solid {Colors.BORDER};
+                border: 1.5px solid {Colors.BORDER_LIGHT};
                 border-radius: 18px;
-                font-size: 16px;
+                font-family: "Georgia", "Times New Roman", serif;
+                font-style: italic;
+                font-weight: bold;
+                font-size: 18px;
                 color: {Colors.TEXT_SECONDARY};
+                padding: 0px;
+                min-height: 0px;
+                min-width: 0px;
             }}
             QPushButton:hover {{
                 border-color: {Colors.ACCENT_PRIMARY};

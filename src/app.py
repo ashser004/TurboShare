@@ -12,11 +12,12 @@ import logging
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Slot
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QStackedWidget, QFileDialog, QWidget,
 )
 
-from src.core.config import APP_NAME, MAX_TRANSFER_SIZE
+from src.core.config import APP_NAME, MAX_TRANSFER_SIZE, LOGO_PATH
 from src.core.session import Session, SessionMode, SessionState, DeviceInfo
 from src.core.cleanup import cleanup_turbotemp
 from src.transfer.engine import TransferEngine
@@ -47,6 +48,8 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(APP_NAME)
+        if LOGO_PATH.is_file():
+            self.setWindowIcon(QIcon(str(LOGO_PATH)))
         self.setMinimumSize(900, 600)
         self.resize(1000, 650)
         self.setStyleSheet(f"background-color: {Colors.BG_PRIMARY};")

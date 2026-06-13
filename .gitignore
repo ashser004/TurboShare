@@ -45,3 +45,6 @@ temp/
 .ruff_cache/
 .cache/
 .ipynb_checkpoints/
+
+# Deprecated SSL manager
+src/core/ssl_manager.py

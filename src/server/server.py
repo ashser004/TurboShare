@@ -36,7 +36,7 @@ class TurboShareServer:
         self._site: web.TCPSite | None = None
 
     async def start(self) -> None:
-        """Build and start the HTTPS server on the session's port."""
+        """Build and start the HTTP server on the session's port."""
         self._app = web.Application(
             middlewares=[
                 token_middleware,
@@ -58,12 +58,11 @@ class TurboShareServer:
             self._runner,
             host="0.0.0.0",
             port=self.session.port,
-            ssl_context=self.session.ssl_context,
         )
         await self._site.start()
 
         log.info(
-            "HTTPS server started on port %d  (URL: %s)",
+            "HTTP server started on port %d  (URL: %s)",
             self.session.port,
             self.session.session_url,
         )

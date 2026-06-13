@@ -121,12 +121,12 @@ class SendPreviewPage(QWidget):
         """)
         right_layout.addWidget(self._url_label)
 
-        # HTTPS warning hint
-        self._https_hint = QLabel("📱 On phone: tap Advanced → Proceed if warned about certificate")
+        # Connection hint
+        self._https_hint = QLabel("📱 Connect your phone to the same Wi-Fi network")
         self._https_hint.setWordWrap(True)
         self._https_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._https_hint.setStyleSheet(f"""
-            font-size: 10px; color: {Colors.ACCENT_WARNING};
+            font-size: 10px; color: {Colors.TEXT_MUTED};
             background: transparent; padding: 2px;
         """)
         right_layout.addWidget(self._https_hint)

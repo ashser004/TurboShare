@@ -77,5 +77,5 @@ LOTTIE_FILES = {
 SESSION_PATH_PREFIX = "/ts"
 
 def build_session_url(ip: str, port: int, token: str) -> str:
-    """Construct the full HTTPS session URL."""
-    return f"https://{ip}:{port}{SESSION_PATH_PREFIX}/{token}/"
+    """Construct the full HTTP session URL."""
+    return f"http://{ip}:{port}{SESSION_PATH_PREFIX}/{token}/"

@@ -23,7 +23,6 @@ from src.core.config import (
     build_session_url,
 )
 from src.core.network import get_local_ip, find_available_port
-from src.core.ssl_manager import generate_self_signed_cert
 from src.security.token_manager import generate_token
 from src.security.pin_manager import PinManager
 
@@ -104,10 +103,6 @@ class Session:
 
         self.pin_manager: PinManager | None = None
 
-        self.ssl_cert_path: Path | None = None
-        self.ssl_key_path: Path | None = None
-        self.ssl_context = None
-
         self.files: list[FileEntry] = []
         self.save_dir: Path = DEFAULT_SAVE_DIR
 
@@ -142,11 +137,6 @@ class Session:
         self.session_url = build_session_url(self.local_ip, self.port, self.token)
 
         self.pin_manager = PinManager()
-
-        cert_path, key_path, ctx = generate_self_signed_cert(self.local_ip)
-        self.ssl_cert_path = cert_path
-        self.ssl_key_path = key_path
-        self.ssl_context = ctx
 
         self.locked_ip = None
         self.device_info = None

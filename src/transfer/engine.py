@@ -84,6 +84,7 @@ class TransferEngine:
         self,
         files: list[FileEntry],
         save_dir: Path,
+        chunk_size: int = CHUNK_SIZE,
     ) -> bool:
         """Prepare assemblers for receiving files."""
         self._files = files
@@ -96,10 +97,11 @@ class TransferEngine:
                 save_dir=save_dir,
                 file_name=f.name,
                 file_size=f.size,
+                chunk_size=chunk_size,
             )
 
         self.speed.start()
-        log.info("Prepared to receive %d files into %s", len(files), save_dir)
+        log.info("Prepared to receive %d files into %s with chunk size %d", len(files), save_dir, chunk_size)
         return True
 
     # ── Sender: serve a chunk on demand ─────────────────────────────

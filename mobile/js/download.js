@@ -15,6 +15,10 @@
     let downloadQueue = [];
     let activeDownloadId = null;
 
+    let activeWorkersCount = 0;
+    let desiredConcurrency = 4;
+    let maxConcurrencyCap = 4;
+
     window.Download = {
         setToken: function (token) { sessionToken = token; },
         startQueue: startQueue,
@@ -74,12 +78,23 @@
      * Upload files from the phone browser to the laptop (Receive mode).
      *
      * Sends an init request with file metadata, then uploads chunks
-     * with 4 parallel connections per file.
+     * with dynamically adjusted parallel connections per file.
      */
     async function uploadFiles(token, fileList) {
         sessionToken = token;
-        const CHUNK_SIZE = 524288; // 512 KB
-        const PARALLEL = 4;
+
+        // Detect device hardware specs for memory and CPU concurrency hints
+        const deviceMemory = navigator.deviceMemory || 8; // Default to 8 GB if unsupported
+        maxConcurrencyCap = deviceMemory < 3 ? 1 : (deviceMemory < 6 ? 2 : 4);
+        desiredConcurrency = Math.min(4, maxConcurrencyCap);
+
+        // Calculate dynamic chunk size
+        let preferredChunkSize = 2097152; // Default 2 MB
+        if (deviceMemory < 3) {
+            preferredChunkSize = 524288; // 512 KB
+        } else if (deviceMemory < 6) {
+            preferredChunkSize = 1048576; // 1 MB
+        }
 
         // Build file metadata
         const filesData = [];
@@ -96,7 +111,10 @@
             const res = await fetch(`/ts/${token}/api/upload-init`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ files: filesData }),
+                body: JSON.stringify({
+                    files: filesData,
+                    preferred_chunk_size: preferredChunkSize
+                }),
             });
             initResp = await res.json();
         } catch (e) {
@@ -121,9 +139,11 @@
                 chunkQueue.push(i);
             }
 
-            // Process queue with PARALLEL workers
+            activeWorkersCount = 0;
             const workers = [];
-            for (let w = 0; w < PARALLEL; w++) {
+            const initialWorkers = Math.min(desiredConcurrency, chunkQueue.length);
+            for (let w = 0; w < initialWorkers; w++) {
+                activeWorkersCount++;
                 workers.push(uploadWorker(token, fileMeta.id, file, chunkQueue, chunkSize));
             }
 
@@ -133,6 +153,12 @@
 
     async function uploadWorker(token, fileId, file, queue, chunkSize) {
         while (queue.length > 0) {
+            // Downshift active workers if desired concurrency was lowered
+            if (activeWorkersCount > desiredConcurrency) {
+                activeWorkersCount--;
+                return;
+            }
+
             const chunkIndex = queue.shift();
             if (chunkIndex === undefined) break;
 
@@ -141,12 +167,32 @@
             const blob = file.slice(offset, end);
             
             // Read to memory (essential for mobile OS file access / content URI stability)
-            const buffer = await blob.arrayBuffer();
+            let buffer;
+            try {
+                buffer = await blob.arrayBuffer();
+            } catch (e) {
+                console.error(`Failed to read chunk ${chunkIndex} to buffer:`, e);
+                if (window.App) {
+                    window.App.showError(`Error reading file. Please try again.`);
+                }
+                activeWorkersCount--;
+                return;
+            }
             const data = new Uint8Array(buffer);
 
             // Upload with retry
             let success = false;
+            let lastDuration = 0;
+
             for (let attempt = 0; attempt < 3; attempt++) {
+                // Check concurrency limit before initiating fetch
+                if (activeWorkersCount > desiredConcurrency) {
+                    queue.unshift(chunkIndex); // put it back
+                    activeWorkersCount--;
+                    return;
+                }
+
+                const startTime = performance.now();
                 try {
                     const res = await fetch(
                         `/ts/${token}/api/chunk/${fileId}/${chunkIndex}`,
@@ -159,15 +205,22 @@
                         }
                     );
 
+                    lastDuration = performance.now() - startTime;
+
                     if (res.ok) {
                         success = true;
                         break;
                     } else if (res.status === 413) {
-                        // 30 GB cap exceeded
+                        // 30 GB cap or server size limit hit
+                        if (window.App) window.App.showError("Transfer size limit exceeded.");
+                        activeWorkersCount--;
                         return;
                     }
                 } catch (e) {
-                    console.warn(`Chunk ${chunkIndex} upload failed, retry ${attempt + 1}`);
+                    console.warn(`Chunk ${chunkIndex} upload failed, retry ${attempt + 1}:`, e);
+                    // Drop concurrency immediately on network error
+                    desiredConcurrency = 1;
+                    await new Promise(r => setTimeout(r, 1000));
                 }
             }
 
@@ -176,8 +229,31 @@
                 if (window.App) {
                     window.App.showError(`Connection lost. Failed to upload chunk ${chunkIndex}.`);
                 }
+                activeWorkersCount--;
                 return;
             }
+
+            // --- Adaptive Tuning ---
+            if (lastDuration > 0) {
+                if (lastDuration < 800) {
+                    // Fast: Increase concurrency limit if below max capacity
+                    if (desiredConcurrency < maxConcurrencyCap) {
+                        desiredConcurrency++;
+                        // If queue has work and we have worker capacity, spin up a new worker
+                        if (activeWorkersCount < desiredConcurrency && queue.length > 0) {
+                            activeWorkersCount++;
+                            uploadWorker(token, fileId, file, queue, chunkSize);
+                        }
+                    }
+                } else if (lastDuration > 3000) {
+                    // Slow: Decrease concurrency limit (minimum 1)
+                    if (desiredConcurrency > 1) {
+                        desiredConcurrency--;
+                    }
+                }
+            }
         }
+
+        activeWorkersCount--;
     }
 })();

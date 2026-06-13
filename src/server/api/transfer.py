@@ -142,7 +142,7 @@ async def upload_init(request: web.Request) -> web.Response:
     The phone browser sends the list of files it wants to upload,
     and the server prepares assemblers for each one.
 
-    Body: {"files": [{"name": "photo.jpg", "size": 12345}, ...]}
+    Body: {"files": [{"name": "photo.jpg", "size": 12345}, ...], "preferred_chunk_size": 1048576}
     """
     session = request.app["session"]
     engine = request.app["transfer_engine"]
@@ -158,6 +158,18 @@ async def upload_init(request: web.Request) -> web.Response:
 
     from src.core.config import MAX_TRANSFER_SIZE, CHUNK_SIZE
     import math
+
+    # Parse preferred chunk size if provided by the client
+    preferred_chunk_size = body.get("preferred_chunk_size")
+    if preferred_chunk_size is not None:
+        try:
+            preferred_chunk_size = int(preferred_chunk_size)
+            # Clamp between 256 KB and 8 MB to prevent memory issues
+            preferred_chunk_size = max(256 * 1024, min(preferred_chunk_size, 8 * 1024 * 1024))
+        except (ValueError, TypeError):
+            preferred_chunk_size = CHUNK_SIZE
+    else:
+        preferred_chunk_size = CHUNK_SIZE
 
     # Build file entries
     file_entries = []
@@ -178,18 +190,18 @@ async def upload_init(request: web.Request) -> web.Response:
     session.files = file_entries
 
     # Prepare assemblers
-    engine.prepare_receive(file_entries, session.save_dir)
+    engine.prepare_receive(file_entries, session.save_dir, preferred_chunk_size)
 
     # Return file metadata with chunk counts
     response_files = []
     for f in file_entries:
-        total_chunks = max(1, math.ceil(f.size / CHUNK_SIZE))
+        total_chunks = max(1, math.ceil(f.size / preferred_chunk_size))
         response_files.append({
             "id": f.id,
             "name": f.name,
             "size": f.size,
             "total_chunks": total_chunks,
-            "chunk_size": CHUNK_SIZE,
+            "chunk_size": preferred_chunk_size,
         })
 
     return web.json_response({

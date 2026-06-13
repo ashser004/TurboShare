@@ -42,7 +42,8 @@ class TurboShareServer:
                 token_middleware,
                 ip_lock_middleware,
                 rate_limit_middleware,
-            ]
+            ],
+            client_max_size=16 * 1024 * 1024,  # 16 MB limit (default is 1 MB)
         )
 
         # Shared state accessible in all handlers via request.app[...]

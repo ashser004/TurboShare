@@ -79,13 +79,14 @@ class FileAssembler:
             log.error("Chunk index %d out of range", index)
             return False
 
-        actual_md5 = hashlib.md5(data).hexdigest()
-        if actual_md5 != expected_md5:
-            log.warning(
-                "Checksum mismatch on chunk %d of %s (expected %s, got %s)",
-                index, self.file_name, expected_md5, actual_md5,
-            )
-            return False
+        if expected_md5:
+            actual_md5 = hashlib.md5(data).hexdigest()
+            if actual_md5 != expected_md5:
+                log.warning(
+                    "Checksum mismatch on chunk %d of %s (expected %s, got %s)",
+                    index, self.file_name, expected_md5, actual_md5,
+                )
+                return False
 
         offset = index * self.chunk_size
         with self._lock:

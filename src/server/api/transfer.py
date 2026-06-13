@@ -113,10 +113,8 @@ async def upload_chunk(request: web.Request) -> web.Response:
 
     file_id = int(request.match_info["file_id"])
     chunk_index = int(request.match_info["chunk_index"])
+    # Make X-Chunk-MD5 optional (bypass hashing if not provided by browser)
     expected_md5 = request.headers.get("X-Chunk-MD5", "")
-
-    if not expected_md5:
-        raise web.HTTPBadRequest(text="X-Chunk-MD5 header required")
 
     data = await request.read()
 

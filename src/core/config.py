@@ -14,7 +14,7 @@ APP_NAME = "TurboShare"
 APP_VERSION = "1.0.0"
 
 # ── Transfer engine ─────────────────────────────────────────────────
-CHUNK_SIZE = 524_288                        # 512 KB per chunk
+CHUNK_SIZE = 2_097_152                      # 2 MB per chunk
 PARALLEL_CONNECTIONS = 4                    # concurrent HTTP streams
 MAX_TRANSFER_SIZE = 30 * (1024 ** 3)        # 30 GB hard cap
 TEMP_EXT = ".turbotemp"                     # in-progress file extension

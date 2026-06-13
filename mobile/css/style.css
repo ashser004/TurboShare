@@ -194,6 +194,7 @@ body {
     outline: none;
     font-family: 'Consolas', 'Courier New', monospace;
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .pin-box:focus {

@@ -69,13 +69,26 @@ async def verify_pin(request: web.Request) -> web.Response:
             {"status": "error", "message": "Invalid request body"}, status=400
         )
 
+    client_ip = get_client_ip(request)
+
+    # Bypass PIN verification if Safe Transfer is OFF
+    if not session.safe_transfer:
+        session.lock_to_ip(client_ip)
+        ua = request.headers.get("User-Agent", "")
+        device = _parse_user_agent(ua)
+        from src.core.session import DeviceInfo
+        session.device_info = DeviceInfo(
+            browser=device["browser"],
+            os=device["os"],
+            ip=client_ip,
+        )
+        return web.json_response({"status": "ok"})
+
     provided_pin = str(body.get("pin", "")).strip()
     if not provided_pin:
         return web.json_response(
             {"status": "error", "message": "PIN is required"}, status=400
         )
-
-    client_ip = get_client_ip(request)
     result = session.pin_manager.verify(client_ip, provided_pin)
 
     if result == "ok":

@@ -32,4 +32,5 @@ async def session_info(request: web.Request) -> web.Response:
         "files": files,
         "total_size": session.total_size,
         "state": session.state.value,
+        "safe_transfer": session.safe_transfer,
     })

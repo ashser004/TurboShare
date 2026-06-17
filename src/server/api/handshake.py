@@ -38,6 +38,11 @@ async def receiver_confirm(request: web.Request) -> web.Response:
     if session.device_info:
         session.signals.receiver_connected.emit(session.device_info)
 
+    if not session.safe_transfer:
+        # Auto-confirm Stage 2
+        session.set_state(SessionState.SENDER_CONFIRMED)
+        log.info("Safe transfer is OFF: Stage 2 automatically confirmed")
+
     log.info("Stage 1 complete: receiver confirmed intent")
     return web.json_response({"status": "ok", "stage": 1})
 

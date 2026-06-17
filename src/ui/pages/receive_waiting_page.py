@@ -87,13 +87,13 @@ class ReceiveWaitingPage(QWidget):
         card_layout.addWidget(self._https_hint)
 
         # PIN
-        pin_title = QLabel("PIN")
-        pin_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        pin_title.setStyleSheet(f"""
+        self._pin_title = QLabel("PIN")
+        self._pin_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._pin_title.setStyleSheet(f"""
             font-size: 12px; color: {Colors.TEXT_SECONDARY};
             font-weight: bold; background: transparent; letter-spacing: 3px;
         """)
-        card_layout.addWidget(pin_title, alignment=Qt.AlignmentFlag.AlignHCenter)
+        card_layout.addWidget(self._pin_title, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self._pin_display = PinDisplay()
         card_layout.addWidget(self._pin_display, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -214,7 +214,7 @@ class ReceiveWaitingPage(QWidget):
 
     # ── Public API ──────────────────────────────────────────────────
 
-    def setup(self, url: str, pin: str) -> None:
+    def setup(self, url: str, pin: str, safe_transfer: bool = True) -> None:
         self._qr_widget.set_url(url)
         self._url_label.setText(url)
         self._pin_display.set_pin(pin)
@@ -229,6 +229,13 @@ class ReceiveWaitingPage(QWidget):
         self._qr_widget.show()
         self._url_label.show()
         self._https_hint.show()
+
+        if safe_transfer:
+            self._pin_title.show()
+            self._pin_display.show()
+        else:
+            self._pin_title.hide()
+            self._pin_display.hide()
 
     def show_sender_info(self, browser: str, os_name: str, ip: str) -> None:
         self._status_label.setText("Sender found — verify the device below")
@@ -246,13 +253,15 @@ class ReceiveWaitingPage(QWidget):
         self._lottie.load_animation("connecting")
         self._lottie.show()
         
-        # Hide QR code elements to prevent layout overlapping
+        # Hide QR code and PIN elements to prevent layout overlapping
         self._qr_widget.hide()
         self._url_label.hide()
         self._https_hint.hide()
+        self._pin_title.hide()
+        self._pin_display.hide()
 
-    def refresh_session(self, url: str, pin: str) -> None:
-        self.setup(url, pin)
+    def refresh_session(self, url: str, pin: str, safe_transfer: bool = True) -> None:
+        self.setup(url, pin, safe_transfer)
 
     @property
     def save_dir(self) -> Path:

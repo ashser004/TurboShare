@@ -22,6 +22,7 @@ from src.core.config import (
     DEFAULT_SAVE_DIR,
     build_session_url,
 )
+from src.core.preferences import load_safe_transfer_setting
 from src.core.network import get_local_ip, find_available_port
 from src.security.token_manager import generate_token
 from src.security.pin_manager import PinManager
@@ -105,6 +106,7 @@ class Session:
 
         self.files: list[FileEntry] = []
         self.save_dir: Path = DEFAULT_SAVE_DIR
+        self.safe_transfer: bool = load_safe_transfer_setting()
 
         self.locked_ip: str | None = None
         self.device_info: DeviceInfo | None = None

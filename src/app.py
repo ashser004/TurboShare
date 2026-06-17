@@ -11,14 +11,15 @@ import asyncio
 import logging
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Slot, QPropertyAnimation, QTimer
+from PySide6.QtCore import Qt, Slot, QPropertyAnimation, QTimer, QRect
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QStackedWidget, QFileDialog, QWidget,
-    QGraphicsOpacityEffect, QLabel, QHBoxLayout, QVBoxLayout,
+    QGraphicsOpacityEffect, QLabel, QHBoxLayout, QVBoxLayout, QFrame,
+    QPushButton,
 )
 
-from src.core.config import APP_NAME, MAX_TRANSFER_SIZE, LOGO_PATH
+from src.core.config import APP_NAME, APP_VERSION, MAX_TRANSFER_SIZE, LOGO_PATH
 from src.core.session import Session, SessionMode, SessionState, DeviceInfo
 from src.core.cleanup import cleanup_turbotemp
 from src.transfer.engine import TransferEngine
@@ -30,6 +31,11 @@ from src.ui.pages.send_preview_page import SendPreviewPage
 from src.ui.pages.receive_waiting_page import ReceiveWaitingPage
 from src.ui.pages.transfer_page import TransferPage
 from src.ui.pages.done_page import DonePage
+from src.ui.pages.about_page import AboutPage
+from src.ui.pages.security_page import SecurityPage
+from src.ui.pages.logs_page import LogsPage
+from src.ui.pages.log_view_page import LogViewPage
+from src.utils.session_logger import SessionLoggingManager
 from src.utils.formatters import format_size
 from src.utils.platform_utils import open_folder_in_explorer
 
@@ -41,6 +47,10 @@ PAGE_SEND_PREVIEW = 1
 PAGE_RECEIVE_WAITING = 2
 PAGE_TRANSFER = 3
 PAGE_DONE = 4
+PAGE_ABOUT = 5
+PAGE_SECURITY = 6
+PAGE_LOGS = 7
+PAGE_LOG_VIEW = 8
 
 
 class MainWindow(QMainWindow):
@@ -60,6 +70,7 @@ class MainWindow(QMainWindow):
         self.session = Session()
         self.engine = TransferEngine()
         self.server = TurboShareServer(self.session, self.engine)
+        self.log_manager = SessionLoggingManager()
 
         # Keep animation refs alive
         self._current_anim = None
@@ -73,12 +84,23 @@ class MainWindow(QMainWindow):
         self._receive_waiting = ReceiveWaitingPage()
         self._transfer = TransferPage()
         self._done = DonePage()
+        self._about = AboutPage()
+        self._security = SecurityPage(self.session)
+        self._logs = LogsPage()
+        self._log_view = LogViewPage()
 
-        self._stack.addWidget(self._home)           # 0
-        self._stack.addWidget(self._send_preview)    # 1
-        self._stack.addWidget(self._receive_waiting) # 2
-        self._stack.addWidget(self._transfer)        # 3
-        self._stack.addWidget(self._done)            # 4
+        self._stack.addWidget(self._home)            # 0
+        self._stack.addWidget(self._send_preview)     # 1
+        self._stack.addWidget(self._receive_waiting)  # 2
+        self._stack.addWidget(self._transfer)         # 3
+        self._stack.addWidget(self._done)             # 4
+        self._stack.addWidget(self._about)            # 5
+        self._stack.addWidget(self._security)         # 6
+        self._stack.addWidget(self._logs)             # 7
+        self._stack.addWidget(self._log_view)         # 8
+
+        # ── Navigation Drawer ───────────────────────────────────────
+        self._drawer = NavDrawer(self, on_navigate=self._navigate_to)
 
         # ── Connect signals ─────────────────────────────────────────
         self._connect_home_signals()
@@ -86,6 +108,10 @@ class MainWindow(QMainWindow):
         self._connect_receive_waiting_signals()
         self._connect_transfer_signals()
         self._connect_done_signals()
+        self._connect_about_signals()
+        self._connect_security_signals()
+        self._connect_logs_signals()
+        self._connect_log_view_signals()
         self._connect_session_signals()
         self._connect_engine_signals()
 
@@ -98,6 +124,7 @@ class MainWindow(QMainWindow):
     def _connect_home_signals(self) -> None:
         self._home.send_clicked.connect(self._on_send_clicked)
         self._home.receive_clicked.connect(self._on_receive_clicked)
+        self._home.hamburger_clicked.connect(self._drawer.open_drawer)
 
     def _connect_send_preview_signals(self) -> None:
         self._send_preview.confirm_clicked.connect(self._on_sender_confirm)
@@ -119,6 +146,19 @@ class MainWindow(QMainWindow):
         self._done.go_home_clicked.connect(self._go_home)
         self._done.open_folder_clicked.connect(self._on_open_folder)
 
+    def _connect_about_signals(self) -> None:
+        self._about.back_clicked.connect(self._go_home)
+
+    def _connect_security_signals(self) -> None:
+        self._security.back_clicked.connect(self._go_home)
+
+    def _connect_logs_signals(self) -> None:
+        self._logs.back_clicked.connect(self._go_home)
+        self._logs.log_selected.connect(self._on_log_selected)
+
+    def _connect_log_view_signals(self) -> None:
+        self._log_view.back_clicked.connect(lambda: self._navigate_to(PAGE_LOGS))
+
     def _connect_session_signals(self) -> None:
         self.session.signals.state_changed.connect(self._on_state_changed)
         self.session.signals.receiver_connected.connect(self._on_receiver_connected)
@@ -135,6 +175,10 @@ class MainWindow(QMainWindow):
         old_index = self._stack.currentIndex()
         if old_index == page_index:
             return
+        
+        if page_index == PAGE_LOGS:
+            self._logs.refresh_logs_list()
+
         old_widget = self._stack.widget(old_index)
         new_widget = self._stack.widget(page_index)
         self._stack.setCurrentIndex(page_index)
@@ -182,6 +226,7 @@ class MainWindow(QMainWindow):
 
         # Create session
         self.session.create(SessionMode.SEND, files=files_data)
+        self.log_manager.start_session_logging()
 
         # Prepare transfer engine
         self.engine.prepare_send(self.session.files)
@@ -195,6 +240,7 @@ class MainWindow(QMainWindow):
             files_dicts,
             self.session.session_url,
             self.session.pin,
+            self.session.safe_transfer,
         )
         self._navigate_to(PAGE_SEND_PREVIEW)
 
@@ -206,9 +252,11 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_receive_clicked(self) -> None:
         self.session.create(SessionMode.RECEIVE)
+        self.log_manager.start_session_logging()
         self._receive_waiting.setup(
             self.session.session_url,
             self.session.pin,
+            self.session.safe_transfer,
         )
         self._navigate_to(PAGE_RECEIVE_WAITING)
         asyncio.ensure_future(self.server.start())
@@ -218,6 +266,9 @@ class MainWindow(QMainWindow):
     @Slot(object)
     def _on_receiver_connected(self, device_info: DeviceInfo) -> None:
         """Stage 1 complete — show device info on the appropriate page."""
+        if not self.session.safe_transfer:
+            return
+
         if self.session.mode == SessionMode.SEND:
             self._send_preview.show_receiver_info(
                 device_info.browser, device_info.os, device_info.ip
@@ -260,11 +311,11 @@ class MainWindow(QMainWindow):
 
         if self.session.mode == SessionMode.SEND:
             self._send_preview.refresh_session(
-                self.session.session_url, self.session.pin,
+                self.session.session_url, self.session.pin, self.session.safe_transfer,
             )
         else:
             self._receive_waiting.refresh_session(
-                self.session.session_url, self.session.pin,
+                self.session.session_url, self.session.pin, self.session.safe_transfer,
             )
 
     # ── Transfer progress ───────────────────────────────────────────
@@ -280,6 +331,7 @@ class MainWindow(QMainWindow):
         is_receive = self.session.mode == SessionMode.RECEIVE
         self._done.show_stats(stats, is_receive=is_receive)
         self._navigate_to(PAGE_DONE)
+        self.log_manager.stop_session_logging()
         asyncio.ensure_future(self._stop_server_delayed())
 
     @Slot(str)
@@ -293,6 +345,7 @@ class MainWindow(QMainWindow):
     def _on_cancel_session(self) -> None:
         self.session.invalidate()
         self.engine.cancel()
+        self.log_manager.stop_session_logging()
         asyncio.ensure_future(self._stop_server())
         self._navigate_to(PAGE_HOME)
 
@@ -300,6 +353,7 @@ class MainWindow(QMainWindow):
     def _on_cancel_transfer(self) -> None:
         self.engine.cancel()
         self.session.invalidate()
+        self.log_manager.stop_session_logging()
         asyncio.ensure_future(self._stop_server())
         self._navigate_to(PAGE_HOME)
 
@@ -325,6 +379,11 @@ class MainWindow(QMainWindow):
     def _on_open_folder(self) -> None:
         open_folder_in_explorer(self.session.save_dir)
 
+    @Slot(str)
+    def _on_log_selected(self, file_path: str) -> None:
+        self._log_view.load_log_file(file_path, self)
+        self._navigate_to(PAGE_LOG_VIEW)
+
     async def _stop_server(self) -> None:
         if self.server.is_running:
             await self.server.stop()
@@ -344,6 +403,7 @@ class MainWindow(QMainWindow):
         log.info("Graceful shutdown started...")
         self.engine.cancel()
         self.session.invalidate()
+        self.log_manager.stop_session_logging()
         try:
             await self._stop_server()
         except Exception as e:
@@ -392,6 +452,12 @@ class MainWindow(QMainWindow):
         """Show a temporary floating toast notification in the center."""
         ToastNotification(message, self)
 
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        if hasattr(self, "_drawer"):
+            self._drawer.setGeometry(self.rect())
+            self._drawer.update_geometry()
+
 
 class ToastNotification(QLabel):
     """Self-dismissing floating toast notification in the center of the parent."""
@@ -439,3 +505,155 @@ class ToastNotification(QLabel):
     def close_and_delete(self) -> None:
         self.hide()
         self.deleteLater()
+
+
+class NavDrawer(QWidget):
+    """Sliding navigation drawer overlay for the main window."""
+
+    def __init__(self, parent: MainWindow, on_navigate) -> None:
+        super().__init__(parent)
+        self.on_navigate = on_navigate
+        self.hide()
+
+        # Dim background
+        self.dim_bg = QFrame(self)
+        self.dim_bg.setStyleSheet("background-color: rgba(10, 10, 15, 0.65);")
+        self.dim_bg.mousePressEvent = lambda event: self.close_drawer()
+
+        # Menu Panel
+        self.panel = QFrame(self)
+        self.panel.setObjectName("nav_panel")
+        self.panel.setStyleSheet(f"""
+            QFrame#nav_panel {{
+                background-color: {Colors.BG_SECONDARY};
+                border-right: 1px solid {Colors.BORDER};
+            }}
+        """)
+
+        panel_layout = QVBoxLayout(self.panel)
+        panel_layout.setContentsMargins(16, 24, 16, 24)
+        panel_layout.setSpacing(12)
+
+        # Header / Close Button
+        brand_layout = QHBoxLayout()
+        self.brand_label = QLabel("⚡ TurboShare")
+        self.brand_label.setStyleSheet(f"""
+            font-size: 18px;
+            font-weight: bold;
+            color: {Colors.ACCENT_PRIMARY};
+            background: transparent;
+        """)
+        brand_layout.addWidget(self.brand_label)
+        brand_layout.addStretch()
+
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.close_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent;
+                border: none;
+                color: {Colors.TEXT_SECONDARY};
+                font-size: 16px;
+                font-weight: bold;
+                padding: 4px;
+            }}
+            QPushButton:hover {{
+                color: {Colors.ACCENT_DANGER};
+            }}
+        """)
+        self.close_btn.clicked.connect(self.close_drawer)
+        brand_layout.addWidget(self.close_btn)
+        panel_layout.addLayout(brand_layout)
+
+        # Separator
+        sep = QFrame()
+        sep.setFixedHeight(1)
+        sep.setStyleSheet(f"background-color: {Colors.BORDER};")
+        panel_layout.addWidget(sep)
+        panel_layout.addSpacing(10)
+
+        # Helper for modern buttons
+        def create_menu_btn(text: str, target_page: int) -> QPushButton:
+            btn = QPushButton(text)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: transparent;
+                    color: {Colors.TEXT_PRIMARY};
+                    border: 1px solid transparent;
+                    border-radius: 8px;
+                    padding: 12px 16px;
+                    font-size: 14px;
+                    text-align: left;
+                }}
+                QPushButton:hover {{
+                    background-color: {Colors.BG_HOVER};
+                    border-color: {Colors.BORDER};
+                    color: {Colors.ACCENT_PRIMARY};
+                }}
+            """)
+            btn.clicked.connect(lambda: self._handle_navigation(target_page))
+            return btn
+
+        # Menu options
+        self.security_btn = create_menu_btn("🔒   Security", PAGE_SECURITY)
+        self.logs_btn = create_menu_btn("📋   Session Logs", PAGE_LOGS)
+        self.about_btn = create_menu_btn("ℹ️   About", PAGE_ABOUT)
+
+        panel_layout.addWidget(self.security_btn)
+        panel_layout.addWidget(self.logs_btn)
+        panel_layout.addWidget(self.about_btn)
+
+        panel_layout.addStretch()
+
+        # Bottom version info
+        self.version_label = QLabel(f"v{APP_VERSION}")
+        self.version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.version_label.setStyleSheet(f"color: {Colors.TEXT_MUTED}; font-size: 11px;")
+        panel_layout.addWidget(self.version_label)
+
+        # Setup slide animation
+        self.anim = QPropertyAnimation(self.panel, b"pos")
+        self.anim.setDuration(250)
+
+    def _handle_navigation(self, page_index: int) -> None:
+        self.close_drawer()
+        self.on_navigate(page_index)
+
+    def open_drawer(self) -> None:
+        self.show()
+        self.raise_()
+        self.dim_bg.setGeometry(self.rect())
+
+        w = int(self.width() * 0.22)
+        w = max(200, min(w, 280))
+        self.panel.setGeometry(-w, 0, w, self.height())
+
+        self.anim.stop()
+        try:
+            self.anim.finished.disconnect()
+        except RuntimeError:
+            pass
+        self.anim.setStartValue(self.panel.pos())
+        self.anim.setEndValue(QRect(0, 0, w, self.height()).topLeft())
+        self.anim.start()
+
+    def close_drawer(self) -> None:
+        w = self.panel.width()
+        self.anim.stop()
+        try:
+            self.anim.finished.disconnect()
+        except RuntimeError:
+            pass
+        self.anim.setStartValue(self.panel.pos())
+        self.anim.setEndValue(QRect(-w, 0, w, self.height()).topLeft())
+        self.anim.finished.connect(self.hide)
+        self.anim.start()
+
+    def update_geometry(self) -> None:
+        self.dim_bg.setGeometry(self.rect())
+        if self.isVisible():
+            w = int(self.width() * 0.22)
+            w = max(200, min(w, 280))
+            self.panel.setGeometry(0, 0, w, self.height())
+

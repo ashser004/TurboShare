@@ -22,6 +22,7 @@ class HomePage(QWidget):
 
     send_clicked = Signal()
     receive_clicked = Signal()
+    hamburger_clicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -31,9 +32,32 @@ class HomePage(QWidget):
         layout.setContentsMargins(40, 30, 40, 30)
         layout.setSpacing(0)
 
-        # ── Top bar: info button ────────────────────────────────────
+        # ── Top bar: hamburger & info button ────────────────────────
         top_bar = QHBoxLayout()
+
+        self.hamburger_btn = QPushButton("☰")
+        self.hamburger_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.hamburger_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent;
+                border: none;
+                color: {Colors.TEXT_PRIMARY};
+                font-size: 24px;
+                padding: 4px;
+                min-width: 36px;
+                max-width: 36px;
+                min-height: 36px;
+                max-height: 36px;
+            }}
+            QPushButton:hover {{
+                color: {Colors.ACCENT_PRIMARY};
+            }}
+        """)
+        self.hamburger_btn.clicked.connect(self.hamburger_clicked.emit)
+        top_bar.addWidget(self.hamburger_btn)
+
         top_bar.addStretch()
+
         info_btn = InfoButton()
         top_bar.addWidget(info_btn)
         layout.addLayout(top_bar)

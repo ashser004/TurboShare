@@ -16,6 +16,7 @@
     let sessionMode = 'send';  // 'send' = laptop sends, phone receives
     let selectedFiles = null;
     let sessionFiles = [];
+    let safeTransferEnabled = true;
 
     // ── Initialise ─────────────────────────────────────────────────
 
@@ -41,6 +42,7 @@
             const res = await fetch(`${API_BASE}/session-info`);
             const data = await res.json();
             sessionMode = data.mode;
+            safeTransferEnabled = data.safe_transfer !== false;
             setupLanding(data);
         } catch (e) {
             showError('Could not connect to TurboShare. Make sure you are on the same network.');
@@ -73,6 +75,7 @@
 
     function setupLanding(data) {
         const indicator = document.getElementById('mode-indicator');
+        const confirmBtn = document.getElementById('btn-confirm');
 
         if (data.mode === 'send') {
             // Phone is receiving files from laptop
@@ -82,11 +85,28 @@
             sessionFiles = data.files || [];
 
             renderFileList(data.files, data.total_size);
+
+            if (!safeTransferEnabled) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Accept & Download';
+            }
         } else {
             // Phone is sending files to laptop
             indicator.textContent = 'Select files to send to the laptop';
             document.getElementById('file-list-card').style.display = 'none';
             document.getElementById('upload-area').style.display = 'block';
+
+            if (!safeTransferEnabled) {
+                confirmBtn.textContent = 'Send Files';
+            }
+        }
+
+        if (!safeTransferEnabled) {
+            // Hide PIN labels and inputs
+            const pinLabel = document.querySelector('.pin-label');
+            if (pinLabel) pinLabel.style.display = 'none';
+            const pinContainer = document.getElementById('pin-container');
+            if (pinContainer) pinContainer.style.display = 'none';
         }
     }
 
@@ -139,16 +159,45 @@
         document.getElementById('selected-size').textContent = window.formatSize(total);
 
         document.getElementById('upload-area').style.display = 'none';
+
+        if (!safeTransferEnabled) {
+            document.getElementById('btn-confirm').disabled = false;
+        }
     }
 
     // ── PIN confirmation ───────────────────────────────────────────
 
     async function onConfirm() {
+        const btn = document.getElementById('btn-confirm');
+        btn.disabled = true;
+
+        if (!safeTransferEnabled) {
+            btn.textContent = 'Connecting…';
+            try {
+                const res = await fetch(`${API_BASE}/verify-pin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin: '000000' }), // Send dummy PIN
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    await fetch(`${API_BASE}/confirm`, { method: 'POST' });
+                    showSection('sec-waiting');
+                    listenForHandshake();
+                } else {
+                    showError('Failed to initialize connection.');
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                showError('Connection error. Try again.');
+                btn.disabled = false;
+            }
+            return;
+        }
+
         const pin = window.PinInput.getPin();
         if (pin.length < 6) return;
 
-        const btn = document.getElementById('btn-confirm');
-        btn.disabled = true;
         btn.textContent = 'Verifying…';
 
         try {

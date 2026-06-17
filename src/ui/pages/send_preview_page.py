@@ -132,13 +132,13 @@ class SendPreviewPage(QWidget):
         right_layout.addWidget(self._https_hint)
 
         # PIN display
-        pin_title = QLabel("PIN")
-        pin_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        pin_title.setStyleSheet(f"""
+        self._pin_title = QLabel("PIN")
+        self._pin_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._pin_title.setStyleSheet(f"""
             font-size: 12px; color: {Colors.TEXT_SECONDARY};
             font-weight: bold; background: transparent; letter-spacing: 3px;
         """)
-        right_layout.addWidget(pin_title, alignment=Qt.AlignmentFlag.AlignHCenter)
+        right_layout.addWidget(self._pin_title, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self._pin_display = PinDisplay()
         right_layout.addWidget(self._pin_display, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -229,7 +229,7 @@ class SendPreviewPage(QWidget):
 
     # ── Public API ──────────────────────────────────────────────────
 
-    def setup(self, files: list[dict], url: str, pin: str) -> None:
+    def setup(self, files: list[dict], url: str, pin: str, safe_transfer: bool = True) -> None:
         """Populate the page with files and session info."""
         self._files_data = list(files)
 
@@ -255,6 +255,13 @@ class SendPreviewPage(QWidget):
         self._url_label.show()
         self._https_hint.show()
 
+        if safe_transfer:
+            self._pin_title.show()
+            self._pin_display.show()
+        else:
+            self._pin_title.hide()
+            self._pin_display.hide()
+
     def show_receiver_info(self, browser: str, os_name: str, ip: str) -> None:
         """Called when Stage 1 completes — show device info and enable Confirm."""
         self._status_label.setText("Receiver found — verify the device below")
@@ -274,12 +281,14 @@ class SendPreviewPage(QWidget):
         self._lottie.load_animation("connecting")
         self._lottie.show()
         
-        # Hide QR code elements to prevent layout overlapping
+        # Hide QR code and PIN elements to prevent layout overlapping
         self._qr_widget.hide()
         self._url_label.hide()
         self._https_hint.hide()
+        self._pin_title.hide()
+        self._pin_display.hide()
 
-    def refresh_session(self, url: str, pin: str) -> None:
+    def refresh_session(self, url: str, pin: str, safe_transfer: bool = True) -> None:
         """Refresh QR + PIN after session regeneration."""
         self._qr_widget.set_url(url)
         self._url_label.setText(url)
@@ -300,6 +309,13 @@ class SendPreviewPage(QWidget):
         self._qr_widget.show()
         self._url_label.show()
         self._https_hint.show()
+
+        if safe_transfer:
+            self._pin_title.show()
+            self._pin_display.show()
+        else:
+            self._pin_title.hide()
+            self._pin_display.hide()
 
     # ── Private ─────────────────────────────────────────────────────
 

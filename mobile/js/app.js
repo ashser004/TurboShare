@@ -44,6 +44,9 @@
             sessionMode = data.mode;
             safeTransferEnabled = data.safe_transfer !== false;
             setupLanding(data);
+            if (sessionMode === 'send') {
+                startSessionInfoPolling();
+            }
         } catch (e) {
             showError('Could not connect to TurboShare. Make sure you are on the same network.');
         }
@@ -69,6 +72,11 @@
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         const section = document.getElementById(id);
         if (section) section.classList.add('active');
+
+        // Stop polling if we transition away from landing or waiting sections
+        if (id !== 'sec-landing' && id !== 'sec-waiting') {
+            stopSessionInfoPolling();
+        }
     }
 
     // ── Landing setup ──────────────────────────────────────────────
@@ -265,7 +273,16 @@
                         // Phone is sender — upload files
                         window.Download.uploadFiles(TOKEN, selectedFiles);
                     } else if (sessionMode === 'send') {
-                        // Phone is receiver — start download queue
+                        // Phone is receiver — perform final session-info fetch to guarantee up-to-date file list
+                        try {
+                            const res = await fetch(`${API_BASE}/session-info`);
+                            const finalData = await res.json();
+                            sessionFiles = finalData.files || [];
+                        } catch (e) {
+                            console.warn('Failed to perform final session info check:', e);
+                        }
+
+                        // Start download queue with the guaranteed latest files
                         if (window.Download && sessionFiles.length > 0) {
                             window.Download.startQueue(sessionFiles);
                         }
@@ -366,5 +383,48 @@
                     container.innerHTML = '<div style="width:60px;height:60px;border-radius:50%;background:rgba(0,212,170,0.2);margin:auto;animation:pulse 2s ease infinite;"></div>';
                 });
         });
+    }
+
+    // ── Session Info Polling (Real-Time Sync) ──────────────────────
+
+    let sessionInfoPollInterval = null;
+
+    function startSessionInfoPolling() {
+        if (sessionInfoPollInterval) return;
+        sessionInfoPollInterval = setInterval(async () => {
+            const activeSection = document.querySelector('.section.active');
+            if (!activeSection || (activeSection.id !== 'sec-landing' && activeSection.id !== 'sec-waiting')) {
+                stopSessionInfoPolling();
+                return;
+            }
+            if (sessionMode !== 'send') {
+                stopSessionInfoPolling();
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/session-info`);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+
+                // If transfer already started/ended, stop polling
+                if (data.state === 'transferring' || data.state === 'completed' || data.state === 'cancelled') {
+                    stopSessionInfoPolling();
+                    return;
+                }
+
+                sessionFiles = data.files || [];
+                renderFileList(data.files, data.total_size);
+            } catch (e) {
+                console.warn('Session info poll failed:', e);
+            }
+        }, 1000); // Poll every 1 second
+    }
+
+    function stopSessionInfoPolling() {
+        if (sessionInfoPollInterval) {
+            clearInterval(sessionInfoPollInterval);
+            sessionInfoPollInterval = null;
+        }
     }
 })();

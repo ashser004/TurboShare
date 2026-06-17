@@ -61,9 +61,9 @@ class SendPreviewPage(QWidget):
         left_layout.addWidget(self._file_list, 1)
 
         # Add More button
-        add_more_btn = QPushButton("+ Add More Files")
-        add_more_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        add_more_btn.setStyleSheet(f"""
+        self._add_more_btn = QPushButton("+ Add More Files")
+        self._add_more_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._add_more_btn.setStyleSheet(f"""
             QPushButton {{
                 background: transparent;
                 color: {Colors.ACCENT_PRIMARY};
@@ -76,8 +76,8 @@ class SendPreviewPage(QWidget):
                 background: {Colors.GLOW_PRIMARY};
             }}
         """)
-        add_more_btn.clicked.connect(self._add_more_files)
-        left_layout.addWidget(add_more_btn)
+        self._add_more_btn.clicked.connect(self._add_more_files)
+        left_layout.addWidget(self._add_more_btn)
 
         # Summary footer
         self._summary_label = QLabel("")
@@ -233,10 +233,12 @@ class SendPreviewPage(QWidget):
         """Populate the page with files and session info."""
         self._files_data = list(files)
 
+        self._file_list.set_removable(True)
         self._file_list.clear_files()
         for f in files:
             self._file_list.add_file(f["id"], f["name"], f["size"])
 
+        self._add_more_btn.show()
         self._update_summary()
         self._qr_widget.set_url(url)
         self._url_label.setText(url)
@@ -264,6 +266,8 @@ class SendPreviewPage(QWidget):
 
     def show_receiver_info(self, browser: str, os_name: str, ip: str) -> None:
         """Called when Stage 1 completes — show device info and enable Confirm."""
+        self._add_more_btn.hide()
+        self._file_list.set_removable(False)
         self._status_label.setText("Receiver found — verify the device below")
         self._status_label.setStyleSheet(f"""
             font-size: 14px; color: {Colors.ACCENT_SUCCESS};
@@ -290,6 +294,8 @@ class SendPreviewPage(QWidget):
 
     def refresh_session(self, url: str, pin: str, safe_transfer: bool = True) -> None:
         """Refresh QR + PIN after session regeneration."""
+        self._add_more_btn.show()
+        self._file_list.set_removable(True)
         self._qr_widget.set_url(url)
         self._url_label.setText(url)
         self._pin_display.set_pin(pin)

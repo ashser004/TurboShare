@@ -68,11 +68,12 @@ class FileListItem(QFrame):
         layout.addWidget(self._status_label)
 
         # Remove button
+        self._remove_btn = None
         if removable:
-            remove_btn = QPushButton("✕")
-            remove_btn.setFixedSize(28, 28)
-            remove_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            remove_btn.setStyleSheet(f"""
+            self._remove_btn = QPushButton("✕")
+            self._remove_btn.setFixedSize(28, 28)
+            self._remove_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            self._remove_btn.setStyleSheet(f"""
                 QPushButton {{
                     background: transparent;
                     color: {Colors.TEXT_MUTED};
@@ -88,8 +89,8 @@ class FileListItem(QFrame):
                     background: {Colors.GLOW_DANGER};
                 }}
             """)
-            remove_btn.clicked.connect(lambda: self.remove_clicked.emit(self.file_id))
-            layout.addWidget(remove_btn)
+            self._remove_btn.clicked.connect(lambda: self.remove_clicked.emit(self.file_id))
+            layout.addWidget(self._remove_btn)
 
     def set_status(self, status: str) -> None:
         """Update the status indicator: 'done', 'transferring', 'waiting', 'error'."""
@@ -196,3 +197,10 @@ class FileListWidget(QWidget):
 
     def set_footer(self, text: str) -> None:
         self._footer.setText(text)
+
+    def set_removable(self, removable: bool) -> None:
+        """Lock or unlock removal of files in the list dynamically."""
+        self._removable = removable
+        for item in self._items.values():
+            if item._remove_btn:
+                item._remove_btn.setVisible(removable)

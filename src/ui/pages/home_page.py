@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpacerItem,
-    QSizePolicy,
+    QSizePolicy, QFrame,
 )
 
 from src.core.config import APP_VERSION, LOGO_PATH
@@ -128,6 +128,18 @@ class HomePage(QWidget):
 
         layout.addLayout(btn_layout)
 
+        layout.addSpacing(24)
+
+        # ── Drag and Drop Label ─────────────────────────────────────
+        drag_label = QLabel("Drag and Drop File(s) to share")
+        drag_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        drag_label.setStyleSheet(f"""
+            font-size: 14px; font-weight: 500;
+            color: {Colors.TEXT_SECONDARY};
+            background: transparent;
+        """)
+        layout.addWidget(drag_label)
+
         layout.addStretch(3)
 
         # ── Version footer ──────────────────────────────────────────
@@ -138,3 +150,54 @@ class HomePage(QWidget):
             background: transparent;
         """)
         layout.addWidget(version)
+
+        # Instantiate overlay
+        self.drag_overlay = DragOverlay(self)
+
+    def show_drag_overlay(self, visible: bool) -> None:
+        """Toggle visual drag overlay highlight."""
+        if visible:
+            self.drag_overlay.show()
+            self.drag_overlay.raise_()
+        else:
+            self.drag_overlay.hide()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        if hasattr(self, "drag_overlay"):
+            self.drag_overlay.setGeometry(self.rect())
+
+
+class DragOverlay(QWidget):
+    """Semi-transparent overlay with a dashed border shown during drag-and-drop."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.hide()
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 24, 24, 24)
+
+        self.border_frame = QFrame()
+        self.border_frame.setStyleSheet(f"""
+            QFrame {{
+                border: 3px dashed {Colors.ACCENT_PRIMARY};
+                border-radius: 24px;
+                background-color: {Colors.GLOW_PRIMARY};
+            }}
+        """)
+
+        frame_layout = QVBoxLayout(self.border_frame)
+        frame_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        label = QLabel("📥\n\nDrop Files Here to Share!")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.setStyleSheet(f"""
+            color: {Colors.ACCENT_PRIMARY};
+            font-size: 22px;
+            font-weight: bold;
+        """)
+
+        frame_layout.addWidget(label)
+        layout.addWidget(self.border_frame)

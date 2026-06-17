@@ -11,10 +11,11 @@ import asyncio
 import logging
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Slot
+from PySide6.QtCore import Qt, Slot, QPropertyAnimation, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QStackedWidget, QFileDialog, QWidget,
+    QGraphicsOpacityEffect, QLabel, QHBoxLayout, QVBoxLayout,
 )
 
 from src.core.config import APP_NAME, MAX_TRANSFER_SIZE, LOGO_PATH
@@ -53,6 +54,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(900, 600)
         self.resize(1000, 650)
         self.setStyleSheet(f"background-color: {Colors.BG_PRIMARY};")
+        self.setAcceptDrops(True)
 
         # ── Core objects ────────────────────────────────────────────
         self.session = Session()
@@ -153,7 +155,9 @@ class MainWindow(QMainWindow):
         )
         if not paths:
             return
+        self._start_send_session(paths)
 
+    def _start_send_session(self, paths: list[str]) -> None:
         # Build file entries
         files_data = []
         for idx, p in enumerate(paths):
@@ -309,6 +313,7 @@ class MainWindow(QMainWindow):
             FileEntry(id=f["id"], name=f["name"], path=Path(f["path"]), size=f["size"])
             for f in files
         ]
+        self.engine.prepare_send(self.session.files)
 
     @Slot(str)
     def _on_save_dir_changed(self, folder: str) -> None:
@@ -346,3 +351,91 @@ class MainWindow(QMainWindow):
         log.info("Graceful shutdown complete. Quitting application.")
         from PySide6.QtWidgets import QApplication
         QApplication.quit()
+
+    # ── Drag and Drop Overrides ─────────────────────────────────────
+
+    def dragEnterEvent(self, event) -> None:
+        if self._stack.currentIndex() == PAGE_HOME and event.mimeData().hasUrls():
+            event.acceptProposedAction()
+            self._home.show_drag_overlay(True)
+
+    def dragMoveEvent(self, event) -> None:
+        if self._stack.currentIndex() == PAGE_HOME and event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dragLeaveEvent(self, event) -> None:
+        self._home.show_drag_overlay(False)
+
+    def dropEvent(self, event) -> None:
+        self._home.show_drag_overlay(False)
+        if self._stack.currentIndex() == PAGE_HOME and event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
+
+            files_paths = []
+            has_folders = False
+            for p in paths:
+                p_path = Path(p)
+                if p_path.is_file():
+                    files_paths.append(p)
+                elif p_path.is_dir():
+                    has_folders = True
+
+            if has_folders:
+                self.show_toast("Folder sharing is not supported.")
+
+            if files_paths:
+                self._start_send_session(files_paths)
+                event.acceptProposedAction()
+
+    def show_toast(self, message: str) -> None:
+        """Show a temporary floating toast notification in the center."""
+        ToastNotification(message, self)
+
+
+class ToastNotification(QLabel):
+    """Self-dismissing floating toast notification in the center of the parent."""
+
+    def __init__(self, message: str, parent: QWidget) -> None:
+        super().__init__(message, parent)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setStyleSheet(f"""
+            background-color: rgba(25, 25, 30, 0.92);
+            color: {Colors.ACCENT_DANGER};
+            border: 1.5px solid {Colors.BORDER_LIGHT};
+            border-radius: 10px;
+            font-size: 13px; font-weight: bold;
+            padding: 12px 24px;
+        """)
+
+        # Set graphics effect for opacity fading
+        self.opacity_effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.opacity_effect)
+
+        # Animation
+        self.anim = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.anim.setDuration(800)
+        self.anim.setStartValue(1.0)
+        self.anim.setEndValue(0.0)
+        self.anim.finished.connect(self.close_and_delete)
+
+        # Timer to start fade out after 2.2 seconds (total duration ~3s)
+        self.timer = QTimer(self)
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.anim.start)
+        self.timer.start(2200)
+
+        self.adjustSize()
+        self.center_position()
+        self.show()
+
+    def center_position(self) -> None:
+        if self.parent():
+            p_rect = self.parent().rect()
+            x = (p_rect.width() - self.width()) // 2
+            y = (p_rect.height() - self.height()) // 2
+            self.move(x, y)
+
+    def close_and_delete(self) -> None:
+        self.hide()
+        self.deleteLater()

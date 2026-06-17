@@ -86,6 +86,13 @@
         const indicator = document.getElementById('mode-indicator');
         const confirmBtn = document.getElementById('btn-confirm');
 
+        // Add class to connection-nodes to dynamically swap left/right nodes
+        const connectionNodes = document.querySelector('.connection-nodes');
+        if (connectionNodes) {
+            connectionNodes.classList.remove('mode-send', 'mode-receive');
+            connectionNodes.classList.add('mode-' + data.mode);
+        }
+
         if (data.mode === 'send') {
             // Phone is receiving files from laptop
             indicator.textContent = 'Files ready for you to download';
@@ -319,6 +326,27 @@
         window.Progress.stop();
         showSection('sec-success');
 
+        // Inject custom animated SVG checkmark
+        const successContainer = document.getElementById('lottie-success');
+        if (successContainer) {
+            successContainer.innerHTML = `
+                <svg class="checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+            `;
+        }
+
+        // Dynamically update success title based on mode (send = phone received, receive = phone sent)
+        const titleEl = document.querySelector('.success-title');
+        if (titleEl) {
+            if (sessionMode === 'send') {
+                titleEl.textContent = 'All files received! 🎉';
+            } else {
+                titleEl.textContent = 'All files sent! 🎉';
+            }
+        }
+
         const files = data.files || [];
         const totalSize = data.total_bytes || 0;
         const speed = data.speed_mbps || 0;
@@ -366,7 +394,6 @@
 
         const animations = {
             'lottie-transfer': 'transferring',
-            'lottie-success': 'success',
             'lottie-error': 'error',
         };
 

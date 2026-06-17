@@ -24,6 +24,7 @@
         showSection: showSection,
         showSuccess: showSuccess,
         showError: showError,
+        updateConfirmButtonState: updateConfirmButtonState,
     };
 
     document.addEventListener('DOMContentLoaded', init);
@@ -95,7 +96,6 @@
             renderFileList(data.files, data.total_size);
 
             if (!safeTransferEnabled) {
-                confirmBtn.disabled = false;
                 confirmBtn.textContent = 'Accept & Download';
             }
         } else {
@@ -116,6 +116,8 @@
             const pinContainer = document.getElementById('pin-container');
             if (pinContainer) pinContainer.style.display = 'none';
         }
+
+        updateConfirmButtonState();
     }
 
     function renderFileList(files, totalSize) {
@@ -168,9 +170,7 @@
 
         document.getElementById('upload-area').style.display = 'none';
 
-        if (!safeTransferEnabled) {
-            document.getElementById('btn-confirm').disabled = false;
-        }
+        updateConfirmButtonState();
     }
 
     // ── PIN confirmation ───────────────────────────────────────────
@@ -178,6 +178,13 @@
     async function onConfirm() {
         const btn = document.getElementById('btn-confirm');
         btn.disabled = true;
+
+        if (sessionMode === 'receive' && (!selectedFiles || selectedFiles.length === 0)) {
+            const fileWarning = document.getElementById('file-warning');
+            if (fileWarning) fileWarning.style.display = 'block';
+            btn.disabled = false;
+            return;
+        }
 
         if (!safeTransferEnabled) {
             btn.textContent = 'Connecting…';
@@ -426,5 +433,45 @@
             clearInterval(sessionInfoPollInterval);
             sessionInfoPollInterval = null;
         }
+    }
+
+    function updateConfirmButtonState() {
+        const confirmBtn = document.getElementById('btn-confirm');
+        const fileWarning = document.getElementById('file-warning');
+        if (!confirmBtn) return;
+
+        let filesSelected = selectedFiles && selectedFiles.length > 0;
+        let pinComplete = true;
+
+        if (safeTransferEnabled) {
+            const pin = window.PinInput ? window.PinInput.getPin() : '';
+            pinComplete = pin.length === 6;
+        }
+
+        // Show/hide warning for files
+        if (fileWarning) {
+            if (sessionMode === 'receive' && !filesSelected) {
+                if (pinComplete) {
+                    fileWarning.style.display = 'block';
+                } else {
+                    fileWarning.style.display = 'none';
+                }
+            } else {
+                fileWarning.style.display = 'none';
+            }
+        }
+
+        // Validate button disable state
+        if (sessionMode === 'receive' && !filesSelected) {
+            confirmBtn.disabled = true;
+            return;
+        }
+
+        if (safeTransferEnabled && !pinComplete) {
+            confirmBtn.disabled = true;
+            return;
+        }
+
+        confirmBtn.disabled = false;
     }
 })();

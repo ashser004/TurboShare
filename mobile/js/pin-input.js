@@ -85,10 +85,14 @@
     }
 
     function checkComplete() {
-        const pin = getPin();
-        const confirmBtn = document.getElementById('btn-confirm');
-        if (confirmBtn) {
-            confirmBtn.disabled = pin.length < PIN_LENGTH;
+        if (window.App && typeof window.App.updateConfirmButtonState === 'function') {
+            window.App.updateConfirmButtonState();
+        } else {
+            const pin = getPin();
+            const confirmBtn = document.getElementById('btn-confirm');
+            if (confirmBtn) {
+                confirmBtn.disabled = pin.length < PIN_LENGTH;
+            }
         }
     }
 

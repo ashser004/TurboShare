@@ -142,7 +142,6 @@ class MainWindow(QMainWindow):
         self._transfer.cancel_requested.connect(self._on_cancel_transfer)
 
     def _connect_done_signals(self) -> None:
-        self._done.send_more_clicked.connect(self._on_send_clicked)
         self._done.go_home_clicked.connect(self._go_home)
         self._done.open_folder_clicked.connect(self._on_open_folder)
 

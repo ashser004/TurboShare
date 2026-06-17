@@ -18,7 +18,6 @@ from src.utils.formatters import format_size, format_duration
 class DonePage(QWidget):
     """Transfer complete page with stats and navigation."""
 
-    send_more_clicked = Signal()
     go_home_clicked = Signal()
     open_folder_clicked = Signal()
 
@@ -110,22 +109,17 @@ class DonePage(QWidget):
         self._open_folder_btn.hide()
         btn_layout.addWidget(self._open_folder_btn)
 
-        send_more_btn = QPushButton("📤 Send More")
-        send_more_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        send_more_btn.setStyleSheet(f"""
+        home_btn = QPushButton("Home 🏠")
+        home_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        home_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {Colors.BG_TERTIARY};
                 color: {Colors.TEXT_PRIMARY}; border: 1px solid {Colors.BORDER};
                 border-radius: 12px; padding: 12px 24px; font-size: 14px;
+                font-weight: bold;
             }}
-            QPushButton:hover {{ border-color: {Colors.ACCENT_SECONDARY}; }}
+            QPushButton:hover {{ border-color: {Colors.ACCENT_PRIMARY}; }}
         """)
-        send_more_btn.clicked.connect(self.send_more_clicked.emit)
-        btn_layout.addWidget(send_more_btn)
-
-        home_btn = QPushButton("🏠 Go Home")
-        home_btn.setProperty("class", "primary")
-        home_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         home_btn.clicked.connect(self.go_home_clicked.emit)
         btn_layout.addWidget(home_btn)
 

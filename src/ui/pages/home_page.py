@@ -210,6 +210,9 @@ class DragOverlay(QWidget):
                 border-radius: 24px;
                 background-color: {Colors.GLOW_PRIMARY};
             }}
+            QLabel {{
+                background-color: transparent;
+            }}
         """)
 
         frame_layout = QVBoxLayout(self.border_frame)

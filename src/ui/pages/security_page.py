@@ -69,6 +69,9 @@ class SecurityPage(QWidget):
                 border: 1px solid {Colors.BORDER};
                 border-radius: 16px;
             }}
+            QFrame#security_card QLabel {{
+                background-color: transparent;
+            }}
         """)
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(30, 30, 30, 30)
@@ -222,7 +225,15 @@ class SecurityWarningDialog(QDialog):
         self.setWindowTitle("Security Warning")
         self.setModal(True)
         self.setMinimumWidth(450)
-        self.setStyleSheet(f"background-color: {Colors.BG_SECONDARY}; border-radius: 16px;")
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {Colors.BG_SECONDARY};
+                border-radius: 16px;
+            }}
+            QLabel {{
+                background-color: transparent;
+            }}
+        """)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)

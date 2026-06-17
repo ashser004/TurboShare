@@ -62,6 +62,9 @@ class AboutPage(QWidget):
                 border: 1px solid {Colors.BORDER};
                 border-radius: 16px;
             }}
+            QFrame#about_card QLabel {{
+                background-color: transparent;
+            }}
         """)
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(30, 30, 30, 30)

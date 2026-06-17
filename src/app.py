@@ -610,7 +610,7 @@ class NavDrawer(QWidget):
         # Bottom version info
         self.version_label = QLabel(f"v{APP_VERSION}")
         self.version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.version_label.setStyleSheet(f"color: {Colors.TEXT_MUTED}; font-size: 11px;")
+        self.version_label.setStyleSheet(f"color: {Colors.TEXT_MUTED}; font-size: 11px; background-color: transparent;")
         panel_layout.addWidget(self.version_label)
 
         # Setup slide animation

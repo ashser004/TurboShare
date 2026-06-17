@@ -11,6 +11,7 @@ Receive mode (phone → laptop):
 """
 
 import logging
+from pathlib import Path
 from aiohttp import web
 
 from src.core.session import SessionState, FileEntry
@@ -175,7 +176,11 @@ async def upload_init(request: web.Request) -> web.Response:
     file_entries = []
     total_size = 0
     for idx, fd in enumerate(files_data):
-        name = fd.get("name", f"file_{idx}")
+        # Strip path traversal characters (security hardening)
+        raw_name = fd.get("name", f"file_{idx}")
+        name = Path(raw_name).name
+        if not name:
+            name = f"file_{idx}"
         size = int(fd.get("size", 0))
         total_size += size
         entry = FileEntry(

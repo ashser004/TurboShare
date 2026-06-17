@@ -45,7 +45,7 @@ def _base_dir() -> Path:
     """Return the project root whether running from source or frozen exe."""
     if getattr(sys, "frozen", False):
         # PyInstaller --onedir: exe lives inside dist/TurboShare/
-        return Path(sys._MEIPASS)
+        return Path(getattr(sys, "_MEIPASS"))
     # Running from source: src/ is one level below project root
     return Path(__file__).resolve().parent.parent.parent
 

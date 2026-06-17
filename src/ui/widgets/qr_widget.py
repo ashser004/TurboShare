@@ -11,6 +11,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QLabel
 
 import qrcode
+from qrcode.constants import ERROR_CORRECT_H
 from qrcode.image.pil import PilImage
 
 
@@ -31,7 +32,7 @@ class QRWidget(QLabel):
 
         qr = qrcode.QRCode(
             version=None,
-            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            error_correction=ERROR_CORRECT_H,
             box_size=8,
             border=2,
         )

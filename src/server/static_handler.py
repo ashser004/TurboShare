@@ -22,7 +22,7 @@ mimetypes.add_type("font/woff2", ".woff2")
 mimetypes.add_type("font/woff", ".woff")
 
 
-async def serve_mobile_page(request: web.Request) -> web.Response:
+async def serve_mobile_page(request: web.Request) -> web.StreamResponse:
     """Serve the mobile SPA entry point (index.html)."""
     index_path = MOBILE_DIR / "index.html"
     if not index_path.is_file():
@@ -32,7 +32,7 @@ async def serve_mobile_page(request: web.Request) -> web.Response:
     })
 
 
-async def serve_static(request: web.Request) -> web.Response:
+async def serve_static(request: web.Request) -> web.StreamResponse:
     """Serve a static file from mobile/ or assets/ directories.
 
     Path format: /ts/{token}/static/{category}/{rest_of_path}

@@ -48,3 +48,6 @@ temp/
 
 # Deprecated SSL manager
 src/core/ssl_manager.py
+
+# Local editor/type-checker settings
+pyproject.toml

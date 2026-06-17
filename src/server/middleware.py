@@ -19,9 +19,11 @@ log = logging.getLogger(__name__)
 
 def get_client_ip(request: web.Request) -> str:
     """Extract the real client IP from the request."""
-    peername = request.transport.get_extra_info("peername")
-    if peername:
-        return peername[0]
+    transport = request.transport
+    if transport is not None:
+        peername = transport.get_extra_info("peername")
+        if peername:
+            return peername[0]
     return request.remote or "0.0.0.0"
 
 

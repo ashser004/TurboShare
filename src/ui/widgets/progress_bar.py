@@ -5,9 +5,15 @@ A custom-painted progress bar with gradient fill, glow effect on the
 leading edge, and smooth value interpolation.
 """
 
+from typing import TYPE_CHECKING, Any
 from PySide6.QtCore import (
-    Qt, QPropertyAnimation, QEasingCurve, Property,
+    Qt, QPropertyAnimation, QEasingCurve, QByteArray,
 )
+
+if TYPE_CHECKING:
+    def Property(*args: Any, **kwargs: Any) -> Any: ...
+else:
+    from PySide6.QtCore import Property
 from PySide6.QtGui import QPainter, QLinearGradient, QColor, QPen
 from PySide6.QtWidgets import QWidget
 
@@ -26,7 +32,7 @@ class AnimatedProgressBar(QWidget):
         self._value = 0.0       # 0.0 – 1.0
         self._display_value = 0.0  # interpolated for smooth animation
 
-        self._anim = QPropertyAnimation(self, b"display_value")
+        self._anim = QPropertyAnimation(self, QByteArray(b"display_value"))
         self._anim.setDuration(200)
         self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
@@ -39,7 +45,7 @@ class AnimatedProgressBar(QWidget):
         self._display_value = val
         self.update()
 
-    display_value = Property(float, _get_display_value, _set_display_value)
+    display_value = Property(float, fget=_get_display_value, fset=_set_display_value)
 
     # ── Public API ──────────────────────────────────────────────────
 

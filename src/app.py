@@ -11,7 +11,7 @@ import asyncio
 import logging
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Slot, QPropertyAnimation, QTimer, QRect
+from PySide6.QtCore import Qt, Slot, QPropertyAnimation, QTimer, QRect, QByteArray
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QStackedWidget, QFileDialog, QWidget,
@@ -479,7 +479,7 @@ class ToastNotification(QLabel):
         self.setGraphicsEffect(self.opacity_effect)
 
         # Animation
-        self.anim = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.anim = QPropertyAnimation(self.opacity_effect, QByteArray(b"opacity"))
         self.anim.setDuration(800)
         self.anim.setStartValue(1.0)
         self.anim.setEndValue(0.0)
@@ -496,8 +496,9 @@ class ToastNotification(QLabel):
         self.show()
 
     def center_position(self) -> None:
-        if self.parent():
-            p_rect = self.parent().rect()
+        parent = self.parentWidget()
+        if parent:
+            p_rect = parent.rect()
             x = (p_rect.width() - self.width()) // 2
             y = (p_rect.height() - self.height()) // 2
             self.move(x, y)
@@ -613,7 +614,7 @@ class NavDrawer(QWidget):
         panel_layout.addWidget(self.version_label)
 
         # Setup slide animation
-        self.anim = QPropertyAnimation(self.panel, b"pos")
+        self.anim = QPropertyAnimation(self.panel, QByteArray(b"pos"))
         self.anim.setDuration(250)
 
     def _handle_navigation(self, page_index: int) -> None:
@@ -630,10 +631,6 @@ class NavDrawer(QWidget):
         self.panel.setGeometry(-w, 0, w, self.height())
 
         self.anim.stop()
-        try:
-            self.anim.finished.disconnect()
-        except RuntimeError:
-            pass
         self.anim.setStartValue(self.panel.pos())
         self.anim.setEndValue(QRect(0, 0, w, self.height()).topLeft())
         self.anim.start()
@@ -641,13 +638,17 @@ class NavDrawer(QWidget):
     def close_drawer(self) -> None:
         w = self.panel.width()
         self.anim.stop()
-        try:
-            self.anim.finished.disconnect()
-        except RuntimeError:
-            pass
         self.anim.setStartValue(self.panel.pos())
         self.anim.setEndValue(QRect(-w, 0, w, self.height()).topLeft())
-        self.anim.finished.connect(self.hide)
+
+        def on_finished():
+            try:
+                self.anim.finished.disconnect(on_finished)
+            except RuntimeError:
+                pass
+            self.hide()
+
+        self.anim.finished.connect(on_finished)
         self.anim.start()
 
     def update_geometry(self) -> None:

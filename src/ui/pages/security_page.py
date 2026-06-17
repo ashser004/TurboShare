@@ -4,7 +4,13 @@ TurboShare — Security Preferences Page.
 Allows configuring "Safe Transfer" bypass mode with warning verification.
 """
 
-from PySide6.QtCore import Qt, Signal, Property, QPropertyAnimation, QEasingCurve, QRect
+from typing import TYPE_CHECKING, Any
+from PySide6.QtCore import Qt, Signal, QPropertyAnimation, QEasingCurve, QRect, QByteArray
+
+if TYPE_CHECKING:
+    def Property(*args: Any, **kwargs: Any) -> Any: ...
+else:
+    from PySide6.QtCore import Property
 from PySide6.QtGui import QPainter, QColor, QBrush, QPen
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame,
@@ -138,18 +144,18 @@ class SwitchToggle(QAbstractButton):
         # Knob offset animation (from 4px margin to width - knob_size - 4px margin)
         self._knob_x = 4
         self._knob_size = 20
-        self.anim = QPropertyAnimation(self, b"knob_x")
+        self.anim = QPropertyAnimation(self, QByteArray(b"knob_x"))
         self.anim.setDuration(180)
         self.anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
 
-    @Property(int)
-    def knob_x(self) -> int:
+    def _get_knob_x(self) -> int:
         return self._knob_x
 
-    @knob_x.setter
-    def knob_x(self, pos: int) -> None:
+    def _set_knob_x(self, pos: int) -> None:
         self._knob_x = pos
         self.update()
+
+    knob_x = Property(int, fget=_get_knob_x, fset=_set_knob_x)
 
     def setChecked(self, checked: bool) -> None:
         super().setChecked(checked)

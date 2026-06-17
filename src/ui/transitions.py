@@ -7,7 +7,7 @@ QStackedWidget.  Uses QPropertyAnimation with smooth easing curves.
 
 from PySide6.QtCore import (
     QPropertyAnimation, QEasingCurve, QPoint, QParallelAnimationGroup,
-    QSequentialAnimationGroup, QAbstractAnimation,
+    QSequentialAnimationGroup, QAbstractAnimation, QByteArray,
 )
 from PySide6.QtWidgets import QWidget, QGraphicsOpacityEffect
 
@@ -36,7 +36,7 @@ def fade_transition(
     # Fade out old
     if old_widget is not None:
         old_effect = _ensure_opacity_effect(old_widget)
-        fade_out = QPropertyAnimation(old_effect, b"opacity")
+        fade_out = QPropertyAnimation(old_effect, QByteArray(b"opacity"))
         fade_out.setDuration(duration)
         fade_out.setStartValue(1.0)
         fade_out.setEndValue(0.0)
@@ -46,7 +46,7 @@ def fade_transition(
     # Fade in new
     new_effect = _ensure_opacity_effect(new_widget)
     new_effect.setOpacity(0.0)
-    fade_in = QPropertyAnimation(new_effect, b"opacity")
+    fade_in = QPropertyAnimation(new_effect, QByteArray(b"opacity"))
     fade_in.setDuration(duration)
     fade_in.setStartValue(0.0)
     fade_in.setEndValue(1.0)
@@ -81,7 +81,7 @@ def slide_left_transition(
 
     # Slide old widget left
     if old_widget:
-        anim_old = QPropertyAnimation(old_widget, b"pos")
+        anim_old = QPropertyAnimation(old_widget, QByteArray(b"pos"))
         anim_old.setDuration(duration)
         anim_old.setStartValue(old_widget.pos())
         anim_old.setEndValue(QPoint(-width, 0))
@@ -89,7 +89,7 @@ def slide_left_transition(
         group.addAnimation(anim_old)
 
     # Slide new widget in
-    anim_new = QPropertyAnimation(new_widget, b"pos")
+    anim_new = QPropertyAnimation(new_widget, QByteArray(b"pos"))
     anim_new.setDuration(duration)
     anim_new.setStartValue(QPoint(width, 0))
     anim_new.setEndValue(QPoint(0, 0))

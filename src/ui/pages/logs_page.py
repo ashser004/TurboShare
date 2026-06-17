@@ -67,9 +67,9 @@ class LogsPage(QWidget):
         layout.addWidget(desc_label)
 
         # Scroll Area for Logs
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setStyleSheet("background: transparent; border: none;")
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("background: transparent; border: none;")
         
         self.scroll_content = QWidget()
         self.scroll_content.setStyleSheet("background: transparent;")
@@ -78,8 +78,8 @@ class LogsPage(QWidget):
         self.scroll_layout.setSpacing(10)
         self.scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
-        self.scroll.setWidget(self.scroll_content)
-        layout.addWidget(self.scroll, 1)
+        self.scroll_area.setWidget(self.scroll_content)
+        layout.addWidget(self.scroll_area, 1)
 
     def refresh_logs_list(self) -> None:
         """Scan the logs directory, clear previous widgets, and populate newest first."""

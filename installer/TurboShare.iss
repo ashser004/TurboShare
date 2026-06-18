@@ -53,4 +53,4 @@ Filename: "{app}\{#AppExeName}"; Description: "Launch TurboShare"; Flags: nowait
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""TurboShare"" program=""{app}\{#AppExeName}"""; Flags: runhidden
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{userprofile}\.turboshare_logs"
+Type: filesandordirs; Name: "{%USERPROFILE}\.turboshare_logs"

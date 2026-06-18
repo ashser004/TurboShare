@@ -1,7 +1,7 @@
 #define AppName "TurboShare"
 #define AppExeName "TurboShare.exe"
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.1.0"
 #endif
 #define AppPublisher "Ashmith Babu P S"
 #define AppURL "https://github.com/ashser004"
@@ -51,3 +51,6 @@ Filename: "{app}\{#AppExeName}"; Description: "Launch TurboShare"; Flags: nowait
 
 [UninstallRun]
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""TurboShare"" program=""{app}\{#AppExeName}"""; Flags: runhidden
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{userprofile}\.turboshare_logs"

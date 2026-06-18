@@ -16,17 +16,23 @@ log = logging.getLogger(__name__)
 def cleanup_turbotemp(*directories: Path) -> int:
     """Delete every ``*.turbotemp`` file in the given directories.
 
+    Only searches the root of the given directories (non-recursive).
     Returns the number of files removed.
     """
     removed = 0
     for directory in directories:
         if not directory.is_dir():
             continue
-        for tmp_file in directory.rglob(f"*{TEMP_EXT}"):
-            try:
-                tmp_file.unlink()
-                log.info("Cleaned up leftover temp file: %s", tmp_file)
-                removed += 1
-            except OSError as exc:
-                log.warning("Failed to delete %s: %s", tmp_file, exc)
+        try:
+            # Flat scan: only iterate over immediate files in the directory
+            for path in directory.iterdir():
+                if path.is_file() and path.name.endswith(TEMP_EXT):
+                    try:
+                        path.unlink()
+                        log.info("Cleaned up leftover temp file: %s", path)
+                        removed += 1
+                    except OSError as exc:
+                        log.warning("Failed to delete %s: %s", path, exc)
+        except OSError as exc:
+            log.warning("Failed to list directory %s: %s", directory, exc)
     return removed

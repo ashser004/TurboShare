@@ -11,7 +11,7 @@ from pathlib import Path
 
 # ── Application identity ────────────────────────────────────────────
 APP_NAME = "TurboShare"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 # ── Transfer engine ─────────────────────────────────────────────────
 CHUNK_SIZE = 2_097_152                      # 2 MB per chunk

@@ -138,6 +138,11 @@ async def client_ready(request: web.Request) -> web.Response:
     # Signal UI to transition to transfer page
     import time
     session.start_time = time.time()
+    
+    # Restart the speed tracker timer so we don't count the handshake/idle waiting time!
+    engine = request.app["transfer_engine"]
+    engine.speed.start()
+
     session.set_state(SessionState.TRANSFERRING)
 
     return web.json_response({"status": "ok", "stage": 3})

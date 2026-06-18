@@ -283,7 +283,9 @@ class TransferEngine:
             "current_file_progress": current.progress if current else 0.0,
             "overall_progress": min(1.0, self._cumulative_bytes / total_size),
             "speed_mbps": round(self.speed.speed_mbps, 1),
+            "average_speed_mbps": round(self.speed.average_speed_mbps, 1),
             "eta_seconds": round(self.speed.eta_seconds(remaining), 1),
+            "elapsed_seconds": round(self.speed.elapsed_seconds, 1),
             "bytes_transferred": self._cumulative_bytes,
             "total_bytes": total_size,
             "files": [

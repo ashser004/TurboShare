@@ -349,15 +349,14 @@
 
         const files = data.files || [];
         const totalSize = data.total_bytes || 0;
-        const speed = data.speed_mbps || 0;
-        const eta = data.eta_seconds || 0;
+        const avgSpeed = data.average_speed_mbps || data.speed_mbps || 0;
+        const elapsed = data.elapsed_seconds || 0;
 
         document.getElementById('stat-files').textContent = files.length;
         document.getElementById('stat-size').textContent = window.formatSize(totalSize);
-        document.getElementById('stat-speed').textContent = speed.toFixed(1) + ' MB/s';
+        document.getElementById('stat-speed').textContent = avgSpeed.toFixed(1) + ' MB/s';
 
-        // Approximate elapsed time
-        const elapsed = speed > 0 ? totalSize / (speed * 1024 * 1024) : 0;
+        // Display exact elapsed time from server
         if (elapsed < 60) {
             document.getElementById('stat-time').textContent = Math.round(elapsed) + 's';
         } else {

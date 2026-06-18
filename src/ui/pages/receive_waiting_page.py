@@ -107,7 +107,7 @@ class ReceiveWaitingPage(QWidget):
             font-size: 14px; color: {Colors.TEXT_SECONDARY};
             background: transparent;
         """)
-        card_layout.addWidget(self._status_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+        card_layout.addWidget(self._status_label)
 
         # Lottie
         self._lottie = LottieWidget("waiting", width=80, height=80)

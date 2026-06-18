@@ -153,7 +153,7 @@ class SendPreviewPage(QWidget):
             font-size: 14px; color: {Colors.TEXT_SECONDARY};
             background: transparent;
         """)
-        right_layout.addWidget(self._status_label, alignment=Qt.AlignmentFlag.AlignHCenter)
+        right_layout.addWidget(self._status_label)
 
         # Lottie animation
         self._lottie = LottieWidget("waiting", width=80, height=80)

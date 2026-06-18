@@ -95,7 +95,7 @@ class HomePage(QWidget):
         """)
         layout.addWidget(title)
 
-        subtitle = QLabel("Fast • Secure • Local")
+        subtitle = QLabel("Fast • Secure • Reliable")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle.setStyleSheet(f"""
             font-size: 14px; color: {Colors.TEXT_SECONDARY};
